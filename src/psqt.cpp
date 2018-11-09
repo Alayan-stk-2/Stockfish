@@ -94,7 +94,7 @@ constexpr Score Bonus[][RANK_NB][int(FILE_NB) / 2] = {
 // Table is defined for white side. There is no file symmetry because kingside
 // and queenside are different. There is one table for enemy king on kingside,
 // one table for enemy king on queenside.
-constexpr Score PBonus[][RANK_NB][FILE_NB] = {
+ Score PBonus[][RANK_NB][FILE_NB] = {
   { },
   { // Enemy king kingside
    { S(  0, 0), S(  0,  0), S(  0, 0), S( 0, 0), S( 0, 0), S(  0, 0), S(  0,  0), S(  0, 0) },
@@ -152,6 +152,8 @@ void init() {
       }
   }
 }
+
+TUNE(SetRange(-40, 50), PBonus, init);
 
 } // namespace PSQT
 
