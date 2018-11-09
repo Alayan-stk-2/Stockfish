@@ -147,8 +147,10 @@ void init() {
           else
           {
             psq[ pc][ s] = score + Bonus[pc][rank_of(s)][f];
+            psq[ pc][ s+ SQUARE_NB] = 0;
           }
           psq[~pc][~s] = -psq[pc][s];
+          psq[~pc][~s+SQUARE_NB] = -psq[pc][s+SQUARE_NB];
       }
   }
 }
