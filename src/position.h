@@ -388,7 +388,21 @@ inline void Position::put_piece(Piece pc, Square s) {
   index[s] = pieceCount[pc]++;
   pieceList[pc][index[s]] = s;
   pieceCount[make_piece(color_of(pc), ALL_PIECES)]++;
-  psq += PSQT::psq[pc][s];
+  if (type_of(pc) == PAWN)
+  {
+    Color Ecol = (color_of(pc) == WHITE ? BLACK : WHITE);
+    File ekf = file_of(square<KING>(Ecol));
+    // Don't transition too suddenly between queenside and kingside PSQT
+    // TODO : use a more efficient method
+    int kingside_frac = (ekf <= 1) ?  0 :
+                        (ekf >= 6) ? 10 :
+                        (ekf-1)*2;
+    psq += (PSQT::psq[pc][s] * kingside_frac + PSQT::psq[pc][s+SQUARE_NB] * (10 - kingside_frac))/10;
+  }
+  else
+  {
+    psq += PSQT::psq[pc][s];
+  }
 }
 
 inline void Position::remove_piece(Piece pc, Square s) {
@@ -406,7 +420,21 @@ inline void Position::remove_piece(Piece pc, Square s) {
   pieceList[pc][index[lastSquare]] = lastSquare;
   pieceList[pc][pieceCount[pc]] = SQ_NONE;
   pieceCount[make_piece(color_of(pc), ALL_PIECES)]--;
-  psq -= PSQT::psq[pc][s];
+  // TODO : for merge, remove unnecessary duplication
+  if (type_of(pc) == PAWN)
+  {
+    Color Ecol = (color_of(pc) == WHITE ? BLACK : WHITE);
+    File ekf = file_of(square<KING>(Ecol));
+    // Don't transition too suddenly between queenside and kingside PSQT
+    int kingside_frac = (ekf <= 1) ?  0 :
+                        (ekf >= 6) ? 10 :
+                        (ekf-1)*2;
+    psq -= (PSQT::psq[pc][s] * kingside_frac + PSQT::psq[pc][s+SQUARE_NB] * (10 - kingside_frac))/10;
+  }
+  else
+  {
+    psq -= PSQT::psq[pc][s];
+  }
 }
 
 inline void Position::move_piece(Piece pc, Square from, Square to) {
@@ -421,7 +449,21 @@ inline void Position::move_piece(Piece pc, Square from, Square to) {
   board[to] = pc;
   index[to] = index[from];
   pieceList[pc][index[to]] = to;
-  psq += PSQT::psq[pc][to] - PSQT::psq[pc][from];
+  if (type_of(pc) == PAWN)
+  {
+    Color Ecol = (color_of(pc) == WHITE ? BLACK : WHITE);
+    File ekf = file_of(square<KING>(Ecol));
+    // Don't transition too suddenly between queenside and kingside PSQT
+    int kingside_frac = (ekf <= 1) ?  0 :
+                        (ekf >= 6) ? 10 :
+                        (ekf-1)*2;
+    psq += (PSQT::psq[pc][to] * kingside_frac   + PSQT::psq[pc][to+SQUARE_NB] * (10 - kingside_frac))/10;
+    psq -= (PSQT::psq[pc][from] * kingside_frac + PSQT::psq[from][to+SQUARE_NB] * (10 - kingside_frac))/10;
+  }
+  else
+  {
+    psq += PSQT::psq[pc][to] - PSQT::psq[pc][from];
+  }
 }
 
 inline void Position::do_move(Move m, StateInfo& newSt) {
