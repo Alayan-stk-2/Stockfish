@@ -434,7 +434,7 @@ namespace {
               & (~attackedBy[Us][ALL_PIECES] | attackedBy[Us][KING] | attackedBy[Us][QUEEN]);
 
         // Attacked squares defended at most once by a rook
-        semiweak =  (attackedBy[Them][BISHOP] | attackedBy[Them][KNIGHT])
+        semiweak =  attackedBy[Them][ALL_PIECES]
                     & ~attackedBy2[Us]
                     & attackedBy[Us][ROOK];
 
