@@ -347,8 +347,8 @@ namespace {
 
                 blocked = (DarkSquares & s) ? DarkSquares & blocked : ~DarkSquares & blocked;
 
-                score -= BishopPawns * popcount(blocked)
-                                     * (1 + popcount(blocked & CenterFiles));
+                score -= BishopPawns * (popcount(blocked)
+                                        + 2*popcount(blocked & CenterFiles));
 
                 // Bonus for bishop on a long diagonal which can "see" both center squares
                 if (more_than_one(attacks_bb<BISHOP>(s, pos.pieces(PAWN)) & Center))
