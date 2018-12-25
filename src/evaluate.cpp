@@ -383,7 +383,7 @@ namespace {
 
             blocked = b_l | b_ld | b_lu;
 
-            Biboard border_mask = (Us == WHITE ? FileABB : FileHBB);
+            Bitboard border_mask = (Us == WHITE ? FileABB : FileHBB);
 
             // If all files are blocked
             if ((blocked & FileBBB) && (blocked & FileCBB) &&
@@ -391,7 +391,7 @@ namespace {
                 (blocked & FileFBB) && (blocked & FileGBB) &&
                 (blocked & border_mask))
             {
-                mobility[Us] -= 3*MobilityBonus[Pt - 2][mob]/4;
+                mobility[Us] -= MobilityBonus[Pt - 2][mob];
             }
 
             // Bonus for aligning rook with enemy pawns on the same rank/file
