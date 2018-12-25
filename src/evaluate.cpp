@@ -369,6 +369,16 @@ namespace {
 
         if (Pt == ROOK)
         {
+            // Penalty when the rook is blocked by the pawn structure
+            Bitboard blocked = pos.pieces(Us, PAWN) & shift<Down>(pos.pieces(Them, PAWN));
+            blocked |= pos.pieces(Them, PAWN) & attackedBy[Them][PAWN];
+
+            // Check if this blocks the rook
+            Bitboard b_sw =
+            Bitboard b_w  =
+            Bitboard b_nw =
+
+
             // Bonus for aligning rook with enemy pawns on the same rank/file
             if (relative_rank(Us, s) >= RANK_5)
                 score += RookOnPawn * popcount(pos.pieces(Them, PAWN) & PseudoAttacks[ROOK][s]);
