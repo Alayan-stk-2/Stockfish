@@ -286,6 +286,9 @@ namespace {
 
     constexpr Color     Them = (Us == WHITE ? BLACK : WHITE);
     constexpr Direction Down = (Us == WHITE ? SOUTH : NORTH);
+    constexpr Direction Left = (Us == WHITE ? WEST : EAST);
+    constexpr Direction LeftDown = (Us == WHITE ? SOUTH_WEST : NORTH_EAST);
+    constexpr Direction LeftUp = (Us == WHITE ? NORTH_WEST : SOUTH_EAST);
     constexpr Bitboard OutpostRanks = (Us == WHITE ? Rank4BB | Rank5BB | Rank6BB
                                                    : Rank5BB | Rank4BB | Rank3BB);
     const Square* pl = pos.squares<Pt>(Us);
@@ -374,10 +377,22 @@ namespace {
             blocked |= pos.pieces(Them, PAWN) & attackedBy[Them][PAWN];
 
             // Check if this blocks the rook
-            Bitboard b_sw =
-            Bitboard b_w  =
-            Bitboard b_nw =
+            Bitboard b_l  = blocked & shift<Left>(blocked);
+            Bitboard b_ld = blocked & shift<LeftDown>(blocked);
+            Bitboard b_lu = blocked & shift<LeftUp>(blocked);
 
+            blocked = b_l | b_ld | b_lu;
+
+            Biboard border_mask = (Us == WHITE ? FileABB : FileHBB);
+
+            // If all files are blocked
+            if ((blocked & FileBBB) && (blocked & FileCBB) &&
+                (blocked & FileDBB) && (blocked & FileEBB) &&
+                (blocked & FileFBB) && (blocked & FileGBB) &&
+                (blocked & border_mask))
+            {
+                mobility[Us] -= 3*MobilityBonus[Pt - 2][mob]/4;
+            }
 
             // Bonus for aligning rook with enemy pawns on the same rank/file
             if (relative_rank(Us, s) >= RANK_5)
