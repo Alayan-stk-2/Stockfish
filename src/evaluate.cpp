@@ -142,7 +142,7 @@ namespace {
 
   // PassedSQT[Rank][File] contains a bonus according to the rank and file
   // of a passed pawn
-  constexpr Score PassedSQT[RANK_NB][FILE_NB] = {
+  Score PassedSQT[RANK_NB][FILE_NB] = {
     { S(  0,  0), S(  0,  0), S(  0,  0), S(  0,  0), S(  0,  0), S(  0,  0), S(  0,  0), S(  0,  0)},
     { S(  4, 25), S(  5, 27), S( -4, 10), S(-25,  4), S(-25,  4), S( -4, 10), S(  5, 27), S(  4, 25)},
     { S( 11, 30), S( 12, 32), S(  3, 15), S(-18,  9), S(-18,  9), S(  3, 15), S( 12, 32), S( 11, 30)},
@@ -154,7 +154,7 @@ namespace {
 
   // CandidatePassedSQT[Rank][File] contains a bonus according to the rank and file
   // of a candidate passed pawn. 0 for rank = 7 because it must be a passed pawn to be there.
-  constexpr Score CandidatePassedSQT[RANK_NB][FILE_NB] = {
+  Score CandidatePassedSQT[RANK_NB][FILE_NB] = {
     { S(  0,  0), S(  0,  0), S(  0,  0), S(  0,  0), S(  0,  0), S(  0,  0), S(  0,  0), S(  0,  0)},
     { S(  2, 12), S(  2, 13), S( -2,  5), S(-12,  2), S(-12,  2), S( -2,  5), S(  2, 13), S(  2, 12)},
     { S(  5, 15), S(  6, 16), S(  1,  7), S( -9,  4), S( -9,  4), S(  1,  7), S(  6, 16), S(  5, 15)},
@@ -163,6 +163,8 @@ namespace {
     { S( 81, 87), S( 81, 91), S( 77, 79), S( 66, 76), S( 66, 76), S( 77, 79), S( 81, 91), S( 81, 87)},
     { S(  0,  0), S(  0,  0), S(  0,  0), S(  0,  0), S(  0,  0), S(  0,  0), S(  0,  0), S(  0,  0)}
   };
+
+TUNE(SetRange(-30,300), PassedSQT, CandidatePassedSQT);
 
   // Assorted bonuses and penalties
   constexpr Score BishopPawns        = S(  3,  7);
