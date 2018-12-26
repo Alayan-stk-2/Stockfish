@@ -140,15 +140,33 @@ namespace {
     S(0, 0), S(0, 24), S(38, 71), S(38, 61), S(0, 38), S(51, 38)
   };
 
-  // PassedRank[Rank] contains a bonus according to the rank of a passed pawn
-  constexpr Score PassedRank[RANK_NB] = {
-    S(0, 0), S(5, 18), S(12, 23), S(10, 31), S(57, 62), S(163, 167), S(271, 250)
+  // PassedSQT[Rank][File] contains a bonus according to the rank and file
+  // of a passed pawn
+  constexpr Score PassedSQT[RANK_NB][FILE_NB] = {
+    { S(  0,  0), S(  0,  0), S(  0,  0), S(  0,  0), S(  0,  0), S(  0,  0), S(  0,  0), S(  0,  0)},
+    { S(  4, 25), S(  5, 27), S( -4, 10), S(-25,  4), S(-25,  4), S( -4, 10), S(  5, 27), S(  4, 25)},
+    { S( 11, 30), S( 12, 32), S(  3, 15), S(-18,  9), S(-18,  9), S(  3, 15), S( 12, 32), S( 11, 30)},
+    { S(  9, 38), S( 10, 40), S(  1, 23), S(-20, 17), S(-20, 17), S(  1, 23), S( 10, 40), S(  9, 38)},
+    { S( 56, 69), S( 57, 71), S( 48, 54), S( 27, 48), S( 27, 48), S( 48, 54), S( 57, 71), S( 56, 69)},
+    { S(162,174), S(163,183), S(154,159), S(133,153), S(133,153), S(154,159), S(163,183), S(162,174)},
+    { S(270,257), S(271,259), S(262,242), S(241,236), S(241,236), S(262,242), S(271,259), S(270,257)}
+  };
+
+  // CandidatePassedSQT[Rank][File] contains a bonus according to the rank and file
+  // of a candidate passed pawn. 0 for rank = 7 because it must be a passed pawn to be there.
+  constexpr Score CandidatePassedSQT[RANK_NB][FILE_NB] = {
+    { S(  0,  0), S(  0,  0), S(  0,  0), S(  0,  0), S(  0,  0), S(  0,  0), S(  0,  0), S(  0,  0)},
+    { S(  2, 12), S(  2, 13), S( -2,  5), S(-12,  2), S(-12,  2), S( -2,  5), S(  2, 13), S(  2, 12)},
+    { S(  5, 15), S(  6, 16), S(  1,  7), S( -9,  4), S( -9,  4), S(  1,  7), S(  6, 16), S(  5, 15)},
+    { S(  4, 19), S(  5, 20), S(  0, 11), S(-10,  8), S(-10,  8), S(  0, 11), S(  5, 20), S(  9, 38)},
+    { S( 28, 34), S( 28, 35), S( 24, 27), S( 13, 24), S( 13, 24), S( 48, 54), S( 28, 35), S( 28, 34)},
+    { S( 81, 87), S( 81, 91), S( 77, 79), S( 66, 76), S( 66, 76), S( 77, 79), S( 81, 91), S( 81, 87)},
+    { S(  0,  0), S(  0,  0), S(  0,  0), S(  0,  0), S(  0,  0), S(  0,  0), S(  0,  0), S(  0,  0)}
   };
 
   // PassedFile[File] contains a bonus according to the file of a passed pawn
   constexpr Score PassedFile[FILE_NB] = {
-    S( -1,  7), S( 0,  9), S(-9, -8), S(-30,-14),
-    S(-30,-14), S(-9, -8), S( 0,  9), S( -1,  7)
+    S( -1,  7), S( 0,  9), S(-9, -8), S(-30,-14), S(-30,-14), S(-9, -8), S( 0,  9), S( -1,  7)
   };
 
   // Assorted bonuses and penalties
@@ -633,7 +651,7 @@ namespace {
 
         int r = relative_rank(Us, s);
 
-        Score bonus = PassedRank[r];
+        Score bonus = SCORE_ZERO;
 
         if (r > RANK_3)
         {
@@ -684,9 +702,16 @@ namespace {
         // pawn push to become passed, or have a pawn in front of them.
         if (   !pos.pawn_passed(Us, s + Up)
             || (pos.pieces(PAWN) & forward_file_bb(Us, s)))
+        {
             bonus = bonus / 2;
+            bonus += CandidatePassedSQT[r][file_of(s)];
+        }
+        else
+        {
+            bonus += PassedSQT[r][file_of(s)];
+        }
 
-        score += bonus + PassedFile[file_of(s)];
+        score += bonus;
     }
 
     if (T)
