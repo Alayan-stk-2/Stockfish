@@ -158,6 +158,7 @@ namespace {
   constexpr Score Hanging            = S( 69, 36);
   constexpr Score KingProtector      = S(  7,  8);
   constexpr Score KnightOnQueen      = S( 16, 12);
+  constexpr Score KnightOnPasser     = S(  0, 10);
   constexpr Score LongDiagonalBishop = S( 45,  0);
   constexpr Score MinorBehindPawn    = S( 18,  3);
   constexpr Score PawnlessFlank      = S( 17, 95);
@@ -339,9 +340,10 @@ namespace {
                 // bishop, bigger when the center files are blocked with pawns.
                 Bitboard blocked = pos.pieces(Us, PAWN) & shift<Down>(pos.pieces());
 
-                score -= BishopPawns * pe->pawns_on_same_color_squares(Us, s)
-                                     * (1 + popcount(blocked & CenterFiles));
+                blocked = (DarkSquares & s) ? DarkSquares & blocked : ~DarkSquares & blocked;
 
+                score -= BishopPawns * popcount(blocked)
+                                     * (1 + popcount(blocked & CenterFiles));
                 // Bonus for bishop on a long diagonal which can "see" both center squares
                 if (more_than_one(attacks_bb<BISHOP>(s, pos.pieces(PAWN)) & Center))
                     score += LongDiagonalBishop;
@@ -670,6 +672,23 @@ namespace {
 
                 bonus += make_score(k * w, k * w);
             }
+
+            // Bonus/malus depending on if we have a bishop of the good queening
+            // square color and if the enemy have one.
+            bool dqs = (s & DarkSquares);
+            dqs = (r == RANK_4 || r == RANK_6) ? dqs : !dqs;
+
+            Bitboard qb = dqs ? pos.pieces(Us, BISHOP) & DarkSquares
+                              : pos.pieces(Us, BISHOP) & ~DarkSquares;
+            int u = 2*popcount(qb);
+
+            qb = dqs ? pos.pieces(Them, BISHOP) & DarkSquares
+                     : pos.pieces(Them, BISHOP) & ~DarkSquares;
+
+            u -= 2*popcount(qb);
+
+            bonus += make_score(u * w, u * w);
+
         } // rank > RANK_3
 
         // Scale down bonus for candidate passers which need more than one
