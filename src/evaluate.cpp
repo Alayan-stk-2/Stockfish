@@ -678,14 +678,14 @@ namespace {
 
             Bitboard qb = dqs ? pos.pieces(Us, BISHOP) & DarkSquares
                               : pos.pieces(Us, BISHOP) & ~DarkSquares;
-            int u = 2*popcount(qb);
+            int u = popcount(qb);
 
             qb = dqs ? pos.pieces(Them, BISHOP) & DarkSquares
                      : pos.pieces(Them, BISHOP) & ~DarkSquares;
 
-            u -= 2*popcount(qb);
+            u -= popcount(qb);
 
-            bonus += make_score(u * w, u * w);
+            bonus += make_score(u * w, 3 * u * w);
 
         } // rank > RANK_3
 
