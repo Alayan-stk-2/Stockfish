@@ -685,7 +685,7 @@ namespace {
 
             u -= popcount(qb);
 
-            bonus += make_score(u * w, 3 * u * w);
+            bonus += make_score(3 * u * w, u * w);
 
         } // rank > RANK_3
 
