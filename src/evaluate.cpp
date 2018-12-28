@@ -680,12 +680,7 @@ namespace {
                               : pos.pieces(Us, BISHOP) & ~DarkSquares;
             int u = popcount(qb);
 
-            qb = dqs ? pos.pieces(Them, BISHOP) & DarkSquares
-                     : pos.pieces(Them, BISHOP) & ~DarkSquares;
-
-            u -= popcount(qb);
-
-            bonus += make_score(3 * u * w, u * w);
+            bonus += make_score( 2 * u * w, 2 * u * w);
 
         } // rank > RANK_3
 
