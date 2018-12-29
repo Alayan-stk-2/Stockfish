@@ -101,7 +101,7 @@ namespace {
 
   // MobilityBonus[PieceType-2][attacked] contains bonuses for middle and end game,
   // indexed by piece type and number of attacked squares in the mobility area.
-  constexpr Score MobilityBonus[][32] = {
+  Score MobilityBonus[][32] = {
     { S(-62,-81), S(-53,-56), S(-12,-30), S( -4,-14), S(  3,  8), S( 13, 15), // Knights
       S( 22, 23), S( 28, 27), S( 33, 33) },
     { S(-48,-59), S(-22,-25), S( 12, -7), S( 20,  7), S( 30, 16), S( 41, 32), // Bishops
@@ -117,9 +117,11 @@ namespace {
       S(106,184), S(109,191), S(113,206), S(116,212) }
   };
 
+  TUNE(SetRange(-80,100), MobilityBonus);
+
   // MobilityBonusCenter[PieceType-2][attacked] contains bonuses for middle and end game,
   // indexed by piece type and number of attacked squares in the center mobility area.
-  constexpr Score MobilityBonusCenter[][21] = {
+  Score MobilityBonusCenter[][21] = {
     {  },
     { S( 0, 0), S( 3, 3), S( 6, 6), S( 9, 9), S(12,12), S(15, 15), // Bishops
       S(18,18), S(21,21), S(24,24), S(27,27), S(30,30) },
@@ -127,15 +129,18 @@ namespace {
     {  }
   };
 
+  TUNE(SetRange(-50,50), MobilityBonusCenter);
 
   // MobilityBonusBorder[PieceType-2][attacked] contains bonuses for middle and end game,
   // indexed by piece type and number of attacked squares in the border mobility area.
-  constexpr Score MobilityBonusBorder[][9] = {
+  Score MobilityBonusBorder[][9] = {
     {  },
     { S( 0, 0), S( 0, 0), S( 0, 0), S( 0, 0), S( 0, 0) }, // Bishops
     { },
     {  }
   };
+
+  TUNE(SetRange(-50,50), MobilityBonusBorder);
 
 
   // Outpost[knight/bishop][supported by pawn] contains bonuses for minor
