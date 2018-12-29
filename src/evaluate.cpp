@@ -671,23 +671,23 @@ namespace {
                 bonus += make_score(k * w, k * w);
             }
 
-            // Bonus/malus depending on if we have a bishop of the good queening
-            // square color and if the enemy have one.
-            bool dqs = (s & DarkSquares);
-            dqs = (r == RANK_4 || r == RANK_6) ? dqs : !dqs;
-
-            Bitboard qb = dqs ? pos.pieces(Us, BISHOP) & DarkSquares
-                              : pos.pieces(Us, BISHOP) & ~DarkSquares;
-            int u = popcount(qb);
-
-            qb = dqs ? pos.pieces(Them, BISHOP) & DarkSquares
-                     : pos.pieces(Them, BISHOP) & ~DarkSquares;
-
-            u -= popcount(qb);
-
-            bonus += make_score(3 * u * w, u * w);
-
         } // rank > RANK_3
+
+        // Bonus/malus depending on if we have a bishop of the good queening
+        // square color and if the enemy have one.
+        bool dqs = (s & DarkSquares);
+        dqs = (r == RANK_2 || r == RANK_4 || r == RANK_6) ? dqs : !dqs;
+
+        Bitboard qb = dqs ? pos.pieces(Us, BISHOP) & DarkSquares
+                          : pos.pieces(Us, BISHOP) & ~DarkSquares;
+        int u = popcount(qb);
+
+        qb = dqs ? pos.pieces(Them, BISHOP) & DarkSquares
+                 : pos.pieces(Them, BISHOP) & ~DarkSquares;
+
+        u -= popcount(qb);
+
+        bonus += make_score(5 * u * r, 2* u * r);
 
         // Scale down bonus for candidate passers which need more than one
         // pawn push to become passed, or have a pawn in front of them.
