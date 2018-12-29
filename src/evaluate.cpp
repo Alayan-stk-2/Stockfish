@@ -153,7 +153,8 @@ namespace {
 
   // Assorted bonuses and penalties
   constexpr Score BishopPawns        = S(  3,  7);
-  constexpr Score BishopPawns2       = S(  9,  6);
+            Score BishopPawns2       = S(  9,  6);
+  TUNE(SetRange(0,18), BishopPawns2);
   constexpr Score CloseEnemies       = S(  8,  0);
   constexpr Score CorneredBishop     = S( 50, 50);
   constexpr Score Hanging            = S( 69, 36);
