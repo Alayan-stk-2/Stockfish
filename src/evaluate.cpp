@@ -153,6 +153,7 @@ namespace {
 
   // Assorted bonuses and penalties
   constexpr Score BishopPawns        = S(  3,  7);
+  constexpr Score BishopPawns2       = S(  9,  6);
   constexpr Score CloseEnemies       = S(  8,  0);
   constexpr Score CorneredBishop     = S( 50, 50);
   constexpr Score Hanging            = S( 69, 36);
@@ -280,6 +281,7 @@ namespace {
   Score Evaluation<T>::pieces() {
 
     constexpr Color     Them = (Us == WHITE ? BLACK : WHITE);
+    constexpr Direction Up   = (Us == WHITE ? NORTH : SOUTH);
     constexpr Direction Down = (Us == WHITE ? SOUTH : NORTH);
     constexpr Bitboard OutpostRanks = (Us == WHITE ? Rank4BB | Rank5BB | Rank6BB
                                                    : Rank5BB | Rank4BB | Rank3BB);
@@ -341,6 +343,13 @@ namespace {
 
                 score -= BishopPawns * pe->pawns_on_same_color_squares(Us, s)
                                      * (1 + popcount(blocked & CenterFiles));
+
+                blocked = pos.pieces(Them, PAWN) & shift<Up>(pos.pieces(Us, PAWN));
+                blocked = (DarkSquares & s) ? DarkSquares & blocked : ~DarkSquares & blocked;
+                int bc = popcount(blocked);
+
+                score -= (BishopPawns2 * bc * bc
+                                      * (2 + popcount(blocked & CenterFiles)))/12;
 
                 // Bonus for bishop on a long diagonal which can "see" both center squares
                 if (more_than_one(attacks_bb<BISHOP>(s, pos.pieces(PAWN)) & Center))
