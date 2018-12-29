@@ -347,8 +347,12 @@ namespace {
         int mob = mobc+mobb;
 
         mobility[Us] += MobilityBonus[Pt - 2][mob];
-        mobility[Us] += MobilityBonusCenter[Pt - 2][mobc];
-        mobility[Us] += MobilityBonusBorder[Pt - 2][mobb];
+        // Temporary code to avoid initialization issues
+        if (Pt == BISHOP)
+        {
+            mobility[Us] += MobilityBonusCenter[Pt - 2][mobc];
+            mobility[Us] += MobilityBonusBorder[Pt - 2][mobb];
+        }
 
         if (Pt == BISHOP || Pt == KNIGHT)
         {
@@ -941,3 +945,4 @@ std::string Eval::trace(const Position& pos) {
 
   return ss.str();
 }
+
