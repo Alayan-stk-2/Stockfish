@@ -344,7 +344,8 @@ namespace {
                 score -= BishopPawns * pe->pawns_on_same_color_squares(Us, s)
                                      * (1 + popcount(blocked & CenterFiles));
 
-                blocked = pos.pieces(Them, PAWN) & shift<Up>(pos.pieces(Us, PAWN));
+                blocked = pos.pieces(Them, PAWN)
+                          & (shift<Up>(pos.pieces(Us, PAWN) | attackedBy[Them][PAWN]);
                 blocked = (DarkSquares & s) ? DarkSquares & blocked : ~DarkSquares & blocked;
                 int bc = popcount(blocked);
 
