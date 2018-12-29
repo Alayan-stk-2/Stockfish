@@ -278,9 +278,9 @@ namespace {
 
     // Squares occupied by those pawns, by our king or queen, or controlled by enemy pawns
     // are excluded from the mobility area.
-    mobilityArea[Us] = mobilityAreaCenter[Us] = mobilityAreaBorder[Us] = ~(b | pos.pieces(Us, KING, QUEEN) | pe->pawn_attacks(Them));
-    mobilityAreaBorder[Us] &= (FileABB | FileHBB | Rank1BB | Rank8BB);
-    mobilityAreaCenter[Us] &= ~mobilityAreaBorder[Us];
+    mobilityArea[Us] = ~(b | pos.pieces(Us, KING, QUEEN) | pe->pawn_attacks(Them));
+    mobilityAreaBorder[Us] = mobilityArea[Us] & (FileABB | FileHBB | Rank1BB | Rank8BB);
+    mobilityAreaCenter[Us] = mobilityArea[Us] & (~FileABB & ~FileHBB & ~Rank1BB & ~Rank8BB);
 
     // Initialise attackedBy bitboards for kings and pawns
     attackedBy[Us][KING] = pos.attacks_from<KING>(pos.square<KING>(Us));
@@ -347,8 +347,8 @@ namespace {
         int mob = mobc+mobb;
 
         mobility[Us] += MobilityBonus[Pt - 2][mob];
-        mobility[Us] += MobilityBonus[Pt - 2][mobc];
-        mobility[Us] += MobilityBonus[Pt - 2][mobb];
+        mobility[Us] += MobilityBonusCenter[Pt - 2][mobc];
+        mobility[Us] += MobilityBonusBorder[Pt - 2][mobb];
 
         if (Pt == BISHOP || Pt == KNIGHT)
         {
