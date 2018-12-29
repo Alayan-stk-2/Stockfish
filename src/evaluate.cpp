@@ -687,15 +687,18 @@ namespace {
 
         u -= popcount(qb);
 
-        bonus += make_score(5 * u * r, 2* u * r);
+        Score bonus2 = make_score( (4 + r) * 2 * u, (4 + r) * 2 * u);
 
         // Scale down bonus for candidate passers which need more than one
         // pawn push to become passed, or have a pawn in front of them.
         if (   !pos.pawn_passed(Us, s + Up)
             || (pos.pieces(PAWN) & forward_file_bb(Us, s)))
+        {
             bonus = bonus / 2;
+            bonus2 = bonus2 / 4;
+        }
 
-        score += bonus + PassedFile[file_of(s)];
+        score += bonus + bonus2 + PassedFile[file_of(s)];
     }
 
     if (T)
