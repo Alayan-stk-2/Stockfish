@@ -104,9 +104,9 @@ namespace {
   constexpr Score MobilityBonus[][32] = {
     { S(-62,-81), S(-53,-56), S(-12,-30), S( -4,-14), S(  3,  8), S( 13, 15), // Knights
       S( 22, 23), S( 28, 27), S( 33, 33) },
-    { S(-48,-59), S(-20,-23), S( 16, -3), S( 26, 13), S( 38, 24), S( 51, 42), // Bishops
-      S( 55, 54), S( 63, 57), S( 63, 65), S( 68, 73), S( 81, 78), S( 81, 86),
-      S( 91, 88), S( 98, 97) },
+    { S(-41,-63), S(-26,-23), S( 18, -7), S( 25, 14), S( 25, 14), S( 34, 28), // Bishops
+      S( 42, 42), S( 41, 43), S( 53, 42), S( 54, 50), S( 55, 65), S( 56, 63),
+      S( 63, 60), S( 72, 70) },
     { S(-58,-76), S(-27,-18), S(-15, 28), S(-10, 55), S( -5, 69), S( -2, 82), // Rooks
       S(  9,112), S( 16,118), S( 30,132), S( 29,142), S( 32,155), S( 38,165),
       S( 46,166), S( 48,169), S( 58,171) },
@@ -115,6 +115,26 @@ namespace {
       S( 60,113), S( 66,120), S( 67,123), S( 70,126), S( 71,133), S( 73,136),
       S( 79,140), S( 88,143), S( 88,148), S( 99,166), S(102,170), S(102,175),
       S(106,184), S(109,191), S(113,206), S(116,212) }
+  };
+
+
+  // MobilityBonusCenter[PieceType-2][attacked] contains bonuses for middle and end game,
+  // indexed by piece type and number of attacked squares in the center mobility area.
+  constexpr Score MobilityBonusCenter[][21] = {
+    {  },
+    { S(-6, 0), S( 2,-5), S( 5, 6), S(17,12), S( 8,20), S(11, 16), // Bishops
+      S(10,13), S(17,22), S(25,18), S(21,21) },
+    {  },
+    {  }
+  };
+
+  // MobilityBonusBorder[PieceType-2][attacked] contains bonuses for middle and end game,
+  // indexed by piece type and number of attacked squares in the border mobility area.
+  constexpr Score MobilityBonusBorder[][9] = {
+    {  },
+    { S( 3, -1), S( 3, 5), S( 0, 0), S( 2,-5), S(-4, 3) }, // Bishops
+    { },
+    {  }
   };
 
   // Outpost[knight/bishop][supported by pawn] contains bonuses for minor
@@ -198,6 +218,8 @@ namespace {
     Material::Entry* me;
     Pawns::Entry* pe;
     Bitboard mobilityArea[COLOR_NB];
+    Bitboard mobilityAreaCenter[COLOR_NB];
+    Bitboard mobilityAreaBorder[COLOR_NB];
     Score mobility[COLOR_NB] = { SCORE_ZERO, SCORE_ZERO };
 
     // attackedBy[color][piece type] is a bitboard representing all squares
@@ -251,6 +273,8 @@ namespace {
     // Squares occupied by those pawns, by our king or queen, or controlled by enemy pawns
     // are excluded from the mobility area.
     mobilityArea[Us] = ~(b | pos.pieces(Us, KING, QUEEN) | pe->pawn_attacks(Them));
+    mobilityAreaBorder[Us] = mobilityArea[Us] & (FileABB | FileHBB | Rank1BB | Rank8BB);
+    mobilityAreaCenter[Us] = mobilityArea[Us] & (~FileABB & ~FileHBB & ~Rank1BB & ~Rank8BB);
 
     // Initialise attackedBy bitboards for kings and pawns
     attackedBy[Us][KING] = pos.attacks_from<KING>(pos.square<KING>(Us));
@@ -312,9 +336,18 @@ namespace {
             kingAttacksCount[Us] += popcount(b & attackedBy[Them][KING]);
         }
 
-        int mob = popcount(b & mobilityArea[Us]);
+        int mobc = popcount(b & mobilityAreaCenter[Us]);
+        int mobb = popcount(b & mobilityAreaBorder[Us]);
+        int mob = mobc+mobb;
 
         mobility[Us] += MobilityBonus[Pt - 2][mob];
+
+        // Avoid initialization issues for now with other pieces having no value
+        if (Pt == BISHOP)
+        {
+            mobility[Us] += MobilityBonusCenter[Pt - 2][mobc];
+            mobility[Us] += MobilityBonusBorder[Pt - 2][mobb];
+        }
 
         if (Pt == BISHOP || Pt == KNIGHT)
         {
