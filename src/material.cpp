@@ -31,16 +31,20 @@ namespace {
 
   // Polynomial material imbalance parameters
 
-  constexpr int QuadraticOurs[][PIECE_TYPE_NB] = {
+#define S(mg, eg) make_score(mg, eg)
+
+  constexpr Score QuadraticOurs[][PIECE_TYPE_NB] = {
     //            OUR PIECES
-    // pair pawn knight bishop rook queen
-    {1438                               }, // Bishop pair
-    {  40,   38                         }, // Pawn
-    {  32,  255, -62                    }, // Knight      OUR PIECES
-    {   0,  104,   4,    0              }, // Bishop
-    { -26,   -2,  47,   105,  -208      }, // Rook
-    {-189,   24, 117,   133,  -134, -6  }  // Queen
+    // pair        pawn        knight     bishop       rook         queen
+    {S(1438,1438)                                                              }, // Bishop pair
+    {S(  40,  40), S(38,38)                                                    }, // Pawn
+    {S(  32,  32), S(255,255), S(-62,-62)                                      }, // Knight      OUR PIECES
+    {S(   0,   0), S(104,104), S(  4,  4), S(  0,  0)                          }, // Bishop
+    {S( -26, -26), S( -2, -2), S( 47, 47), S(105,105), S(-208,-208)            }, // Rook
+    {S(-189,-189), S( 24, 24), S(117,117), S(133,133), S(-134,-134), S(-6,-6)  }  // Queen
   };
+
+#undef S
 
   constexpr int QuadraticTheirs[][PIECE_TYPE_NB] = {
     //           THEIR PIECES
@@ -85,11 +89,11 @@ namespace {
   /// imbalance() calculates the imbalance by comparing the piece count of each
   /// piece type for both colors.
   template<Color Us>
-  int imbalance(const int pieceCount[][PIECE_TYPE_NB]) {
+  Score imbalance(const int pieceCount[][PIECE_TYPE_NB]) {
 
     constexpr Color Them = (Us == WHITE ? BLACK : WHITE);
 
-    int bonus = 0;
+    Score bonus = SCORE_ZERO;
 
     // Second-degree polynomial material imbalance, by Tord Romstad
     for (int pt1 = NO_PIECE_TYPE; pt1 <= QUEEN; ++pt1)
@@ -97,13 +101,14 @@ namespace {
         if (!pieceCount[Us][pt1])
             continue;
 
-        int v = 0;
+        Score v = SCORE_ZERO;
 
         for (int pt2 = NO_PIECE_TYPE; pt2 <= pt1; ++pt2)
             v +=  QuadraticOurs[pt1][pt2] * pieceCount[Us][pt2]
-                + QuadraticTheirs[pt1][pt2] * pieceCount[Them][pt2];
+                + make_score(QuadraticTheirs[pt1][pt2],QuadraticTheirs[pt1][pt2]) * pieceCount[Them][pt2];
 
-        bonus += pieceCount[Us][pt1] * v;
+        v = v * pieceCount[Us][pt1];
+        bonus += v;
     }
 
     return bonus;
