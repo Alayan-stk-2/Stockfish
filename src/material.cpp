@@ -36,12 +36,12 @@ namespace {
   constexpr Score QuadraticOurs[][PIECE_TYPE_NB] = {
     //            OUR PIECES
     // pair        pawn        knight     bishop       rook         queen
-    {S(1438,1438)                                                              }, // Bishop pair
-    {S(  40,  40), S(38,38)                                                    }, // Pawn
-    {S(  32,  32), S(255,255), S(-62,-62)                                      }, // Knight      OUR PIECES
-    {S(   0,   0), S(104,104), S(  4,  4), S(  0,  0)                          }, // Bishop
-    {S( -26, -26), S( -2, -2), S( 47, 47), S(105,105), S(-208,-208)            }, // Rook
-    {S(-189,-189), S( 24, 24), S(117,117), S(133,133), S(-134,-134), S(-6,-6)  }  // Queen
+    {S(1344,1449)                                                              }, // Bishop pair
+    {S(  35,  42), S( 40, 39)                                                    }, // Pawn
+    {S(  32,  32), S(241,246), S(-60,-69)                                      }, // Knight      OUR PIECES
+    {S(   0,   0), S( 97,106), S(  4,  4), S(  0,  0)                          }, // Bishop
+    {S( -26, -26), S( -2, -2), S( 41, 47), S(108,109), S(-199,-227)            }, // Rook
+    {S(-183,-184), S( 26, 24), S(124,113), S(140,114), S(-132,-126), S(-6,-6)  }  // Queen
   };
 
 #undef S
@@ -220,7 +220,7 @@ Entry* probe(const Position& pos) {
   { pos.count<BISHOP>(BLACK) > 1, pos.count<PAWN>(BLACK), pos.count<KNIGHT>(BLACK),
     pos.count<BISHOP>(BLACK)    , pos.count<ROOK>(BLACK), pos.count<QUEEN >(BLACK) } };
 
-  e->value = int16_t((imbalance<WHITE>(pieceCount) - imbalance<BLACK>(pieceCount)) / 16);
+  e->value = (imbalance<WHITE>(pieceCount) - imbalance<BLACK>(pieceCount)) / 16;
   return e;
 }
 
