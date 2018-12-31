@@ -102,8 +102,8 @@ namespace {
   // MobilityBonus[PieceType-2][attacked] contains bonuses for middle and end game,
   // indexed by piece type and number of attacked squares in the mobility area.
   constexpr Score MobilityBonus[][32] = {
-    { S(-62,-81), S(-53,-56), S(-12,-30), S( -4,-14), S(  3,  8), S( 13, 15), // Knights
-      S( 22, 23), S( 28, 27), S( 33, 33) },
+    { S(-56,-81), S(-53,-54), S(-12,-32), S( -4,-12), S(  2,  7), S( 12, 13), // Knights
+      S( 19, 18), S( 25, 23), S( 29, 28) },
     { S(-41,-63), S(-26,-23), S( 18, -7), S( 25, 14), S( 25, 14), S( 34, 28), // Bishops
       S( 42, 42), S( 41, 43), S( 53, 42), S( 54, 50), S( 55, 65), S( 56, 63),
       S( 63, 60), S( 72, 70) },
@@ -121,7 +121,8 @@ namespace {
   // MobilityBonusCenter[PieceType-2][attacked] contains bonuses for middle and end game,
   // indexed by piece type and number of attacked squares in the center mobility area.
   constexpr Score MobilityBonusCenter[][21] = {
-    {  },
+    { S(-2, 1), S(-1, 0), S(-1, 1), S( 4, 2), S( 3, 0), S( 4, 4), // Knights
+      S( 6, 5), S( 6, 6), S( 6, 8) },
     { S(-6, 0), S( 2,-5), S( 5, 6), S(17,12), S( 8,20), S(11, 16), // Bishops
       S(10,13), S(17,22), S(25,18), S(21,21) },
     {  },
@@ -131,8 +132,8 @@ namespace {
   // MobilityBonusBorder[PieceType-2][attacked] contains bonuses for middle and end game,
   // indexed by piece type and number of attacked squares in the border mobility area.
   constexpr Score MobilityBonusBorder[][9] = {
-    {  },
-    { S( 3, -1), S( 3, 5), S( 0, 0), S( 2,-5), S(-4, 3) }, // Bishops
+    { S( 0, 1), S(-2,-7), S(-3,-7), S(-1,-4), S(-2,-1) }, // Knight
+    { S( 3,-1), S( 3, 5), S( 0, 0), S( 2,-5), S(-4, 3) }, // Bishops
     { },
     {  }
   };
@@ -342,15 +343,12 @@ namespace {
 
         mobility[Us] += MobilityBonus[Pt - 2][mob];
 
-        // Avoid initialization issues for now with other pieces having no value
-        if (Pt == BISHOP)
-        {
-            mobility[Us] += MobilityBonusCenter[Pt - 2][mobc];
-            mobility[Us] += MobilityBonusBorder[Pt - 2][mobb];
-        }
-
         if (Pt == BISHOP || Pt == KNIGHT)
         {
+            // Avoid initialization issues for now with other pieces having no value
+            mobility[Us] += MobilityBonusCenter[Pt - 2][mobc];
+            mobility[Us] += MobilityBonusBorder[Pt - 2][mobb];
+
             // Bonus if piece is on an outpost square or can reach one
             bb = OutpostRanks & ~pe->pawn_attacks_span(Them);
             if (bb & s)
