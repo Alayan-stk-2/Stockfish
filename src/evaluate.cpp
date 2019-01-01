@@ -348,7 +348,7 @@ namespace {
 
                 // Malus for a bishop trapped by pawns
                 if (!(attacks_bb<BISHOP>(s, pos.pieces(PAWN)) & ~attackedBy[Them][PAWN]))
-                    score -= make_score(-100,-100);
+                    score -= make_score(100,100);
             }
 
             // An important Chess960 pattern: A cornered bishop blocked by a friendly
