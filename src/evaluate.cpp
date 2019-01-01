@@ -161,6 +161,7 @@ namespace {
   constexpr Score LongDiagonalBishop = S( 45,  0);
   constexpr Score MinorBehindPawn    = S( 18,  3);
   constexpr Score PawnlessFlank      = S( 17, 95);
+  constexpr Score PawnTempo          = S(  0,  4);
   constexpr Score RestrictedPiece    = S(  7,  7);
   constexpr Score RookOnPawn         = S( 10, 32);
   constexpr Score SliderOnQueen      = S( 59, 18);
@@ -669,6 +670,12 @@ namespace {
                     k += 4;
 
                 bonus += make_score(k * w, k * w);
+
+                int rt = pe->passed_pawns(Them) ? relative_rank(Them, frontmost_sq(Them, pe->passed_pawns(Them)))
+                                                : RANK_1;
+                if (   (defendedSquares == squaresToQueen)
+                    && (r >  rt)                          )
+                    bonus += PawnTempo*w;
             }
         } // rank > RANK_3
 
