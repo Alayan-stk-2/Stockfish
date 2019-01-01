@@ -36,12 +36,12 @@ namespace {
   constexpr Score QuadraticOurs[][PIECE_TYPE_NB] = {
     //            OUR PIECES
     // pair        pawn        knight     bishop       rook         queen
-    {S(1344,1449)                                                              }, // Bishop pair
-    {S(  35,  42), S( 40, 39)                                                    }, // Pawn
-    {S(  32,  32), S(241,246), S(-60,-69)                                      }, // Knight      OUR PIECES
-    {S(   0,   0), S( 97,106), S(  4,  4), S(  0,  0)                          }, // Bishop
-    {S( -26, -26), S( -2, -2), S( 41, 47), S(108,109), S(-199,-227)            }, // Rook
-    {S(-183,-184), S( 26, 24), S(124,113), S(140,114), S(-132,-126), S(-6,-6)  }  // Queen
+    {S(1359,1594)                                                              }, // Bishop pair
+    {S(  33,  42), S( 38, 40)                                                  }, // Pawn
+    {S(  30,  31), S(248,257), S(-60,-71)                                      }, // Knight      OUR PIECES
+    {S(   0,   0), S(102,110), S(  4,  4), S(  0,  0)                          }, // Bishop
+    {S( -26, -25), S( -2, -2), S( 34, 45), S(102,102), S(-195,-219)            }, // Rook
+    {S(-187,-191), S( 25, 22), S(133,114), S(137,114), S(-132,-128), S(-6,-6)  }  // Queen
   };
 
 #undef S
