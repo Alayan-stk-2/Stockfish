@@ -674,7 +674,9 @@ namespace {
                 int rt = pe->passed_pawns(Them) ? relative_rank(Them, frontmost_sq(Them, pe->passed_pawns(Them)))
                                                 : RANK_1;
                 if (   (defendedSquares == squaresToQueen)
-                    && (r >  (rt+1))                          )
+                    && (r >  (rt+1))
+                    && ( pos.count<ALL_PIECES>(Us) - pos.count<ALL_PIECES>(Them)
+                         - pos.count<PAWN>(Us) + pos.count<PAWN>(Them) >= 0)     )
                     bonus += PawnTempo*w;
             }
         } // rank > RANK_3
