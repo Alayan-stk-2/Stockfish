@@ -675,8 +675,7 @@ namespace {
                                                 : RANK_1;
                 if (   (defendedSquares == squaresToQueen)
                     && (r >  (rt+1))
-                    && ( pos.count<ALL_PIECES>(Us) - pos.count<ALL_PIECES>(Them)
-                         - pos.count<PAWN>(Us) + pos.count<PAWN>(Them) >= 0)     )
+                    && ( popcount(pos.non_pawn_material(Us)) >= popcount(pos.non_pawn_material(Them)))     )
                     bonus += PawnTempo*w;
             }
         } // rank > RANK_3
