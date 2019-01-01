@@ -33,7 +33,7 @@ namespace {
 
 #define S(mg, eg) make_score(mg, eg)
 
-  constexpr Score QuadraticOurs[][PIECE_TYPE_NB] = {
+  Score QuadraticOurs[][PIECE_TYPE_NB] = {
     //            OUR PIECES
     // pair        pawn        knight     bishop       rook         queen
     {S(1359,1594)                                                                  }, // Bishop pair
@@ -43,6 +43,8 @@ namespace {
     {S( -26, -25), S( -2, -2), S( 34, 45), S(102,102), S(-195,-219)                }, // Rook
     {S(-187,-191), S( 25, 22), S(133,114), S(137,114), S(-132,-128), S(-200,-200)  }  // Queen
   };
+
+TUNE(QuadraticOurs);
 
 #undef S
 
