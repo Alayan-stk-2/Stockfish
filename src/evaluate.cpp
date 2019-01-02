@@ -680,7 +680,7 @@ namespace {
                 b_sac &= (attackedBy[Us][ROOK] | attackedBy[Us][QUEEN]);
                 b_sac &= ~attackedBy2[Them];
 
-                bool defended_pawn = (SquareBB[s] & (~attackedBy[Them][ALL_PIECES] | (~attackedBy2[Them] & attackedBy[Us][ALL_PIECES])));
+                bool defended_pawn = (SquareBB[s] & (~attackedBy[Them][ALL_PIECES] | (~attackedBy2[Them] & (attackedBy[Us][BISHOP] | attackedBy[Us][KNIGHT]))));
 
                 if (defended_pawn && b_sac)
                     bonus += make_score(12, 20);
