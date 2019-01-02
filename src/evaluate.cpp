@@ -346,18 +346,18 @@ namespace {
                 if (more_than_one(attacks_bb<BISHOP>(s, pos.pieces(PAWN)) & Center))
                     score += LongDiagonalBishop;
 
-                if (mob <= 3)
+                if (mob <= 5)
                 {
                     blocked = pos.pieces(Us, PAWN) & pos.pieces(Us, KING) & shift<Down>(pos.pieces(Them) | pos.pieces(Us, PAWN));
                     blocked |= ((~pos.pieces(Them) | pos.pieces(Them, PAWN)) & attackedBy[Them][PAWN]);
 
-                    Bitboard bishopArea = attacks_bb<BISHOP>(s, pos.pieces(Us) & pos.pieces(Them)) & ~blocked;
+                    Bitboard bishopArea = attacks_bb<BISHOP>(s, pos.pieces(Us)) & ~blocked;
                     Bitboard babase = bishopArea;
 
                     while (babase)
                     {
                         Square loopsq = pop_lsb(&babase);
-                        bishopArea |= (attacks_bb<BISHOP>(loopsq, pos.pieces(Us) & pos.pieces(Them)) & ~blocked);
+                        bishopArea |= (attacks_bb<BISHOP>(loopsq, pos.pieces(Us)) & ~blocked);
                     }
 
                     int realMobility = popcount(bishopArea);
