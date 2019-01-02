@@ -683,7 +683,7 @@ namespace {
                 bool defended_pawn = (SquareBB[s] & (~attackedBy[Them][ALL_PIECES] | (~attackedBy2[Them] & attackedBy[Us][ALL_PIECES])));
 
                 if (defended_pawn && b_sac)
-                    bonus += make_score(25, 50);
+                    bonus += make_score(15, 30);
             }
         } // rank > RANK_3
 
