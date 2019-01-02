@@ -675,7 +675,7 @@ namespace {
                      && (pawn_attacks_bb<Us>(SquareBB[s]) & (attackedBy[Us][ROOK] | attackedBy[Us][QUEEN]) & ~attackedBy2[Them])
                      && (SquareBB[s] & (~attackedBy[Them][ALL_PIECES] | (~attackedBy2[Them] & attackedBy[Us][ALL_PIECES])))     )
             {
-                    bonus += make_score(20, 30);
+                    bonus += make_score(40, 60);
             }
         } // rank > RANK_3
 
