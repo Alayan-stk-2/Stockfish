@@ -346,7 +346,7 @@ namespace {
                 if (more_than_one(attacks_bb<BISHOP>(s, pos.pieces(PAWN)) & Center))
                     score += LongDiagonalBishop;
 
-                if (mob <= 3)
+                if (mob <= 4)
                 {
                     blocked = pos.pieces(Us, PAWN) & pos.pieces(Us, KING) & shift<Down>(pos.pieces(Them) | pos.pieces(Us, PAWN));
                     blocked |= ((~pos.pieces(Them) | pos.pieces(Them, PAWN)) & attackedBy[Them][PAWN]);
@@ -365,8 +365,8 @@ namespace {
                     int realMobility = popcount(bishopArea);
 
                     int malus = (pos.count<BISHOP>(Us) == 2) ? 25 : 20;
-                    if (realMobility < 7)
-                        score -= make_score(malus, malus) * (7 - realMobility);
+                    if (realMobility < 8)
+                        score -= make_score(malus, malus) * (8 - realMobility);
                 }
             } 
 
