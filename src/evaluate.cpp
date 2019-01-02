@@ -155,6 +155,7 @@ namespace {
   constexpr Score BishopPawns        = S(  3,  7);
   constexpr Score CloseEnemies       = S(  8,  0);
   constexpr Score CorneredBishop     = S( 50, 50);
+  constexpr Score ForcePromo         = S( 10, 30);
   constexpr Score Hanging            = S( 69, 36);
   constexpr Score KingProtector      = S(  7,  8);
   constexpr Score KnightOnQueen      = S( 16, 12);
@@ -669,6 +670,20 @@ namespace {
                     k += 4;
 
                 bonus += make_score(k * w, k * w);
+            }
+            // If the passed pawn is on rank 7, a 8th rank sac is often winning
+            else if (r == RANK_7)
+            {
+
+                Bitboard b_sac = pawn_attacks_bb<Us>(SquareBB[s]);
+
+                b_sac &= (attackedBy[Us][ROOK] | attackedBy[Us][QUEEN]);
+                b_sac &= ~attackedBy2[Them];
+
+                bool defended_pawn = (SquareBB[s] & (~attackedBy[Them][ALL_PIECES] | (~attackedBy2[Them] & attackedBy[Us][ALL_PIECES])));
+
+                if (defended_pawn && b_sac)
+                    bonus += make_score(25, 50);
             }
         } // rank > RANK_3
 
