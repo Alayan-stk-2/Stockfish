@@ -359,7 +359,7 @@ namespace {
                     }
                     int realMobility = popcount(bishopArea);
 
-                    int malus = pos.count<BISHOP>[Us] == 2 ? 40 : 30;
+                    int malus = pos.count<BISHOP>(Us) == 2 ? 40 : 30;
                     if (realMobility < 6)
                         score -= make_score(malus, malus) * (6 - realMobility);
                 }
