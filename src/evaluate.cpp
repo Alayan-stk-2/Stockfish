@@ -346,7 +346,7 @@ namespace {
                 if (more_than_one(attacks_bb<BISHOP>(s, pos.pieces(PAWN)) & Center))
                     score += LongDiagonalBishop;
 
-                if (mob <= 5)
+                if (mob <= 3)
                 {
                     blocked = pos.pieces(Us, PAWN) & pos.pieces(Us, KING) & shift<Down>(pos.pieces(Them) | pos.pieces(Us, PAWN));
                     blocked |= ((~pos.pieces(Them) | pos.pieces(Them, PAWN)) & attackedBy[Them][PAWN]);
