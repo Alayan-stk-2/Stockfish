@@ -83,6 +83,10 @@ namespace {
     e->pawnAttacks[Us]   = pawn_attacks_bb<Us>(ourPawns);
     e->pawnsOnSquares[Us][BLACK] = popcount(ourPawns & DarkSquares);
     e->pawnsOnSquares[Us][WHITE] = pos.count<PAWN>(Us) - e->pawnsOnSquares[Us][BLACK];
+    e->splitPassedPawns[Us] = 0;
+
+    File fmin = FILE_H;
+    File fmax = FILE_A;
 
     // Loop through all pawns of the current color and score each pawn
     while ((s = *pl++) != SQ_NONE)
@@ -116,7 +120,13 @@ namespace {
         if (   !(stoppers ^ lever ^ leverPush)
             && popcount(support) >= popcount(lever) - 1
             && popcount(phalanx) >= popcount(leverPush))
+        {
             e->passedPawns[Us] |= s;
+            if (f < fmin)
+                fmin = f;
+            if (f > fmax)
+                fmax = f;
+        }
 
         else if (   stoppers == SquareBB[s + Up]
                  && relative_rank(Us, s) >= RANK_5)
@@ -124,7 +134,13 @@ namespace {
             b = shift<Up>(support) & ~theirPawns;
             while (b)
                 if (!more_than_one(theirPawns & PawnAttacks[Us][pop_lsb(&b)]))
+                {
                     e->passedPawns[Us] |= s;
+                    if (f < fmin)
+                        fmin = f;
+                    if (f > fmax)
+                        fmax = f;
+                }
         }
 
         // Score this pawn
@@ -140,6 +156,10 @@ namespace {
         if (doubled && !support)
             score -= Doubled;
     }
+
+    // check if passed pawns are on both flanks
+    if (popcount(e->passedPawns[Us]) >= 2)
+        e->splitPassedPawns[Us] = fmax-fmin;
 
     return score;
   }
