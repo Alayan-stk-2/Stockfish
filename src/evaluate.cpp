@@ -158,7 +158,7 @@ namespace {
   constexpr Score Hanging            = S( 69, 36);
   constexpr Score KingProtector      = S(  7,  8);
   constexpr Score KnightOnQueen      = S( 16, 12);
-  constexpr Score KnightPassedPawns  = S(  0,  6);
+  constexpr Score KnightPassedPawns  = S(  0,  8);
   constexpr Score LongDiagonalBishop = S( 45,  0);
   constexpr Score MinorBehindPawn    = S( 18,  3);
   constexpr Score PawnlessFlank      = S( 17, 95);
@@ -338,8 +338,8 @@ namespace {
             // multiple split passed pawns
             if (Pt == KNIGHT && (pos.non_pawn_material(Us) <= KnightValueEg))
             {
-                score -= KnightPassedPawns * (pe->split_passed_pawns(Them)-2);
-                score -= KnightPassedPawns * (pe->split_passed_pawns(Us)-2);
+                score -= KnightPassedPawns * (pe->split_passed_pawns(Them)-3);
+                score -= KnightPassedPawns * (pe->split_passed_pawns(Us)-3);
             }
 
             if (Pt == BISHOP)
