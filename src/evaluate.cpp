@@ -348,7 +348,7 @@ namespace {
 
                 if (mob < 7)
                 {
-                    int loc = std::min(file_of(s), 7 - file_of(s)) + std::min(rank_of(s), 7 - rank_of(s));
+                    int loc = std::min((int)file_of(s), 7 - file_of(s)) + std::min((int)rank_of(s), 7 - rank_of(s));
                     loc = 12 + (mob-7)*(7-loc);
                     score += make_score(loc, loc);
                 }
