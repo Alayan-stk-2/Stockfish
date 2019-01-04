@@ -345,6 +345,13 @@ namespace {
                 // Bonus for bishop on a long diagonal which can "see" both center squares
                 if (more_than_one(attacks_bb<BISHOP>(s, pos.pieces(PAWN)) & Center))
                     score += LongDiagonalBishop;
+
+                if (mob < 7)
+                {
+                    int loc = std::min(file_of(s), 7 - file_of(s)) + std::min(rank_of(s), 7 - rank_of(s));
+                    loc = 12 + (mob-7)*(7-loc);
+                    score += make_score(loc, loc);
+                }
             }
 
             // An important Chess960 pattern: A cornered bishop blocked by a friendly
