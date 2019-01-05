@@ -670,6 +670,16 @@ namespace {
 
                 bonus += make_score(k * w, k * w);
             }
+            // Score blocked 7th ranked passed pawns depending on their defense
+            else if (r == RANK_7)
+            {
+                bool defended_pawn = (SquareBB[s] & (~attackedBy[Them][ALL_PIECES] | (~attackedBy2[Them] & attackedBy[Us][ALL_PIECES])));
+
+                if (defended_pawn && (pos.count<ROOK>(Us) >= 1))
+                    bonus += make_score(40, 80);
+                else if (!defended_pawn)
+                    bonus += make_score(-30, -60);
+            }
         } // rank > RANK_3
 
         // Scale down bonus for candidate passers which need more than one
