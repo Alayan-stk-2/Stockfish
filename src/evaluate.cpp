@@ -670,6 +670,20 @@ namespace {
 
                 bonus += make_score(k * w, k * w);
             }
+            // If the passed pawn is on rank 7, a 8th rank sac is often winning
+            else if (r == RANK_7 && (pos.count<ROOK>(Us) + pos.count<QUEEN>(Us)))
+            {
+
+                Bitboard b_sac = pawn_attacks_bb<Us>(SquareBB[s]);
+
+                b_sac &= (attackedBy[Us][ROOK] | attackedBy[Us][QUEEN]);
+                b_sac &= ~attackedBy2[Them];
+
+                bool defended_pawn = (SquareBB[s] & (~attackedBy[Them][ALL_PIECES] | (~attackedBy2[Them] & (attackedBy[Us][BISHOP] | attackedBy[Us][KNIGHT]))));
+
+                if (defended_pawn)
+                    bonus += b_sac ? make_score(150, 200) : make_score(30, 60);
+            }
         } // rank > RANK_3
 
         // Scale down bonus for candidate passers which need more than one
