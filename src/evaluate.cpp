@@ -557,7 +557,7 @@ namespace {
 
     stronglyRestricted = restricted & (attackedBy2[Us] | ~attackedBy[Us][QUEEN]);
     int r = popcount(restricted) + popcount(stronglyRestricted);
-    score += make_score(r*r/4, r*r/4);
+    score += make_score(r*r/6, r*r/2);
 
     // Bonus for enemy unopposed weak pawns
     if (pos.pieces(Us, ROOK, QUEEN))
