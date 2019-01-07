@@ -171,6 +171,10 @@ namespace {
   constexpr Score TrappedRook        = S( 96,  4);
   constexpr Score WeakQueen          = S( 49, 15);
   constexpr Score WeakUnopposedPawn  = S( 12, 23);
+                          Score qsrA = S(150, 200);
+                          Score qsrB = S(60, 60);
+
+  TUNE(qsrA,qsrB);
 
 #undef S
 
@@ -682,7 +686,7 @@ namespace {
                 bool defended_pawn = (SquareBB[s] & (~attackedBy[Them][ALL_PIECES] | (~attackedBy2[Them] & (attackedBy[Us][BISHOP] | attackedBy[Us][KNIGHT]))));
 
                 if (defended_pawn)
-                    bonus += b_sac ? make_score(150, 200) : make_score(30, 60);
+                    bonus += b_sac ? qsrA : qsrB;
             }
         } // rank > RANK_3
 
