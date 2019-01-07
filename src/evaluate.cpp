@@ -171,10 +171,9 @@ namespace {
   constexpr Score TrappedRook        = S( 96,  4);
   constexpr Score WeakQueen          = S( 49, 15);
   constexpr Score WeakUnopposedPawn  = S( 12, 23);
-                          Score qsrA = S(150, 200);
-                          Score qsrB = S(60, 60);
+                          Score qsrB = S(90, 75);
 
-  TUNE(qsrA,qsrB);
+  TUNE(qsrB);
 
 #undef S
 
@@ -675,18 +674,14 @@ namespace {
                 bonus += make_score(k * w, k * w);
             }
             // If the passed pawn is on rank 7, a 8th rank sac is often winning
+            // This code gives a bonus in situations where such a sac can be threatened
             else if (r == RANK_7 && (pos.count<ROOK>(Us) + pos.count<QUEEN>(Us)))
             {
-
-                Bitboard b_sac = pawn_attacks_bb<Us>(SquareBB[s]);
-
-                b_sac &= (attackedBy[Us][ROOK] | attackedBy[Us][QUEEN]);
-                b_sac &= ~attackedBy2[Them];
-
-                bool defended_pawn = (SquareBB[s] & (~attackedBy[Them][ALL_PIECES] | (~attackedBy2[Them] & (attackedBy[Us][BISHOP] | attackedBy[Us][KNIGHT]))));
-
-                if (defended_pawn)
-                    bonus += b_sac ? qsrA : qsrB;
+                if (  SquareBB[s]
+                    & (   ~attackedBy[Them][ALL_PIECES]
+                        | (~attackedBy2[Them] & (attackedBy[Us][BISHOP] | attackedBy[Us][KNIGHT]))
+                        | (attackedBy2[Them] & attackedBy2[Us])))
+                    bonus += qsrB;
             }
         } // rank > RANK_3
 
