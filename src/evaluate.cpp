@@ -172,6 +172,10 @@ namespace {
   constexpr Score WeakQueen          = S( 49, 15);
   constexpr Score WeakUnopposedPawn  = S( 12, 23);
 
+            Score UselessKnightPawn  = S( 15, 75);
+
+TUNE(UselessKnightPawn);
+
 #undef S
 
   // Evaluation class computes and stores attacks tables and other working data
@@ -346,6 +350,9 @@ namespace {
                 if (more_than_one(attacks_bb<BISHOP>(s, pos.pieces(PAWN)) & Center))
                     score += LongDiagonalBishop;
             }
+            else if (!(pos.pieces() & (DistanceRingBB[s][1] | DistanceRingBB[s][2]) 
+                      & ~(pos.pieces(Them, PAWN) & attackedBy[Them][PAWN])))
+                score -= UselessKnightPawn;
 
             // An important Chess960 pattern: A cornered bishop blocked by a friendly
             // pawn diagonally in front of it is a very serious problem, especially
