@@ -172,6 +172,12 @@ namespace {
   constexpr Score WeakQueen          = S( 49, 15);
   constexpr Score WeakUnopposedPawn  = S( 12, 23);
 
+    int kdA = 185;
+    int kdB = 30;
+    int kdC = 35;
+
+TUNE(kdA,kdB,kdC);
+
 #undef S
 
   // Evaluation class computes and stores attacks tables and other working data
@@ -464,10 +470,13 @@ namespace {
     // the square is in the attacker's mobility area.
     unsafeChecks &= mobilityArea[Them];
 
+    Bitboard weakKingRing = kingRing[Us] & weak;
+
     kingDanger +=        kingAttackersCount[Them] * kingAttackersWeight[Them]
                  +  69 * kingAttacksCount[Them]
-                 + 175 * popcount(kingRing[Us] & weak)
-                 +  50 * popcount(kingRing[Us] & weak & attackedBy2[Them])
+                 +  kdA * popcount(weakKingRing)
+                 +  kdB * popcount(weakKingRing & attackedBy2[Them])
+                 +  kdC * popcount(weakKingRing & (pos.pieces(Us) ^ pos.pieces(Us, PAWN)))
                  + 150 * popcount(pos.blockers_for_king(Us) | unsafeChecks)
                  +       tropism * tropism / 4
                  - 873 * !pos.count<QUEEN>(Them)
