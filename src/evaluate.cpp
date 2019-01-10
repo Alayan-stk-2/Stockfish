@@ -674,10 +674,9 @@ namespace {
             // This code gives a bonus in situations where such a sac can be threatened
             else if (r == RANK_7 && (pos.count<ROOK>(Us) + pos.count<QUEEN>(Us)))
             {
-                if (  SquareBB[s]
-                    & (   ~attackedBy[Them][ALL_PIECES]
-                        | (~attackedBy2[Them] & (attackedBy[Us][BISHOP] | attackedBy[Us][KNIGHT]))
-                        | (attackedBy2[Them] & attackedBy2[Us])))
+                if (  s & (   ~attackedBy[Them][ALL_PIECES]
+                        | (~attackedBy2[Them] & (attackedBy[Us][BISHOP] | attackedBy[Us][KNIGHT] | attackedBy[Us][PAWN]))
+                        | attackedBy2[Us]))
                     bonus += make_score(112, 59);
             }
         } // rank > RANK_3
