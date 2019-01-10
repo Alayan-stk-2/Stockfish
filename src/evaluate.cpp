@@ -464,9 +464,13 @@ namespace {
     // the square is in the attacker's mobility area.
     unsafeChecks &= mobilityArea[Them];
 
+    Bitboard weakKingRing = kingRing[Us] & weak;
+
     kingDanger +=        kingAttackersCount[Them] * kingAttackersWeight[Them]
                  +  69 * kingAttacksCount[Them]
-                 + 185 * popcount(kingRing[Us] & weak)
+                 + 187 * popcount(weakKingRing)
+                 +  35 * popcount(weakKingRing & attackedBy2[Them])
+                 +  32 * popcount(weakKingRing & (pos.pieces(Us) ^ pos.pieces(Us, PAWN)))
                  + 150 * popcount(pos.blockers_for_king(Us) | unsafeChecks)
                  +       tropism * tropism / 4
                  - 873 * !pos.count<QUEEN>(Them)
