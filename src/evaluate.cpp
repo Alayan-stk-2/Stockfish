@@ -675,7 +675,7 @@ namespace {
             else if (r == RANK_7 && (pos.count<ROOK>(Us) + pos.count<QUEEN>(Us)))
             {
                 if (  s & (   ~attackedBy[Them][ALL_PIECES]
-                        | (~attackedBy2[Them] & (attackedBy[Us][BISHOP] | attackedBy[Us][KNIGHT] | attackedBy[Us][PAWN]))
+                        | (~attackedBy2[Them] & (attackedBy[Us][BISHOP] | attackedBy[Us][KNIGHT] | attackedBy[Us][PAWN]))
                         | attackedBy2[Us]))
                     bonus += make_score(112, 59);
             }
