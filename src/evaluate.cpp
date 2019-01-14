@@ -337,7 +337,7 @@ namespace {
             // Penalty if the piece is far from the king
             score -= KingProtector * distance(s, pos.square<KING>(Us));
 
-            if (mob <= 3 && mob!=0 && popcount(moveArea & Edges) == mob)
+            if (mob <= 3 && mob!=0 && !(moveArea & ~Edges))
             {
                 score -= EdgeMobMinor;
             }
