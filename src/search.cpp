@@ -499,7 +499,9 @@ void Thread::search() {
           && !Threads.stop
           && !Threads.stopOnPonderhit)
       {
-          double fallingEval = (306 + 119 * failedLow + 6 * (mainThread->previousScore - bestValue)) / 581.0;
+          int eval_change = mainThread->previousScore - bestValue;
+          int eval_change_scaled = 600*eval_change*abs(eval_change)/((abs(bestValue)+300)*(abs(eval_change)+5));
+          double fallingEval = (306 + 119 * failedLow + 6 * eval_change_scaled) / 581.0;
           fallingEval        = std::max(0.5, std::min(1.5, fallingEval));
 
           // If the bestMove is stable over several iterations, reduce time accordingly
