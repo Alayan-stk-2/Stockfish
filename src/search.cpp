@@ -65,6 +65,16 @@ namespace {
   constexpr int SkipSize[]  = { 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4 };
   constexpr int SkipPhase[] = { 0, 1, 0, 1, 2, 3, 0, 1, 2, 3, 4, 5, 0, 1, 2, 3, 4, 5, 6, 7 };
 
+  int A = 600;
+  int B = 300;
+  int C = 1054;
+  int D = 410;
+  int E = 5;
+  int F = 10;
+  int G = 10;
+
+TUNE(A, B, C, D, E, F, G);
+
   // Razor and futility margins
   constexpr int RazorMargin = 600;
   Value futility_margin(Depth d, bool improving) {
@@ -500,8 +510,8 @@ void Thread::search() {
           && !Threads.stopOnPonderhit)
       {
           int eval_change = mainThread->previousScore - bestValue;
-          int eval_change_scaled = 600*eval_change*abs(eval_change)/((abs(bestValue)+300)*(abs(eval_change)+5));
-          double fallingEval = (306 + 119 * failedLow + 6 * eval_change_scaled) / 581.0;
+          int scaled = A*eval_change/(abs(bestValue)+B);
+          double fallingEval = (C + D * failedLow + E*abs(scaled) + F * scaled + (G * scaled * sqrt(scaled) / 10)) / 2000.0;
           fallingEval        = std::max(0.5, std::min(1.5, fallingEval));
 
           // If the bestMove is stable over several iterations, reduce time accordingly
