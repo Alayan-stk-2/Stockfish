@@ -798,9 +798,9 @@ namespace {
 
             if (    single_file
                  && (pos.pieces(~strongSide, KING) & (adjacent_files_bb(pawn_file) | file_bb(pawn_file))))
-                sf = 16;
+                sf = 12;
             else
-                sf = std::min(40 + 7 * pos.count<PAWN>(strongSide), sf);
+                sf = std::min(32 + 8 * pos.count<PAWN>(strongSide), sf);
         }
         else
             sf = std::min(40 + (pos.opposite_bishops() ? 2 : 7) * pos.count<PAWN>(strongSide), sf);

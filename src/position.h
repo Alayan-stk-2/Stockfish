@@ -360,9 +360,9 @@ inline bool Position::opposite_bishops() const {
 inline bool Position::rook_pawns() const {
   return   pieceCount[W_ROOK] == 1
         && pieceCount[B_ROOK] == 1
-        && pieceCount[QUEEN] == 0
-        && pieceCount[BISHOP] == 0
-        && pieceCount[KNIGHT] == 0;
+        && count<QUEEN>() == 0
+        && count<BISHOP>() == 0
+        && count<KNIGHT>() == 0;
 }
 
 inline bool Position::is_chess960() const {
