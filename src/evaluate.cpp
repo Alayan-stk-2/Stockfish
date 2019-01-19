@@ -777,6 +777,31 @@ namespace {
             && pos.non_pawn_material(WHITE) == BishopValueMg
             && pos.non_pawn_material(BLACK) == BishopValueMg)
             sf = 8 + 4 * pe->pawn_asymmetry();
+        // Rook and pawns ending are drawn if the weak side king can block the pawns
+        else if (   pos.rook_pawns() && pos.pieces(strongSide, PAWN))
+        {
+            Bitboard b = pos.pieces(strongSide, PAWN);
+            File pawn_file, pawn_file2;
+            bool pfs = false;
+            bool single_file = true;
+            while (b)
+            {
+                Square s = pop_lsb(&b);
+                pawn_file = file_of(s);
+                if (!pfs)
+                    pfs = true;
+                else if (pawn_file2 != pawn_file)
+                    single_file = false;
+
+                pawn_file2 = pawn_file;
+            }
+
+            if (    single_file
+                 && (pos.pieces(~strongSide, KING) & (adjacent_files_bb(pawn_file) | file_bb(pawn_file))))
+                sf = 16;
+            else
+                sf = std::min(40 + 7 * pos.count<PAWN>(strongSide), sf);
+        }
         else
             sf = std::min(40 + (pos.opposite_bishops() ? 2 : 7) * pos.count<PAWN>(strongSide), sf);
 

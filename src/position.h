@@ -128,6 +128,7 @@ public:
   // Piece specific
   bool pawn_passed(Color c, Square s) const;
   bool opposite_bishops() const;
+  bool rook_pawns() const;
 
   // Doing and undoing moves
   void do_move(Move m, StateInfo& newSt);
@@ -354,6 +355,14 @@ inline bool Position::opposite_bishops() const {
   return   pieceCount[W_BISHOP] == 1
         && pieceCount[B_BISHOP] == 1
         && opposite_colors(square<BISHOP>(WHITE), square<BISHOP>(BLACK));
+}
+
+inline bool Position::rook_pawns() const {
+  return   pieceCount[W_ROOK] == 1
+        && pieceCount[B_ROOK] == 1
+        && pieceCount[QUEEN] == 0
+        && pieceCount[BISHOP] == 0
+        && pieceCount[KNIGHT] == 0;
 }
 
 inline bool Position::is_chess960() const {
