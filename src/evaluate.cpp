@@ -781,20 +781,9 @@ namespace {
         else if (   pos.rook_pawns() && pos.pieces(strongSide, PAWN))
         {
             Bitboard b = pos.pieces(strongSide, PAWN);
-            File pawn_file, pawn_file2;
-            bool pfs = false;
-            bool single_file = true;
-            while (b)
-            {
-                Square s = pop_lsb(&b);
-                pawn_file = file_of(s);
-                if (!pfs)
-                    pfs = true;
-                else if (pawn_file2 != pawn_file)
-                    single_file = false;
 
-                pawn_file2 = pawn_file;
-            }
+            File pawn_file = file_of(lsb(b));
+            bool single_file = (b == (b & file_bb(pawn_file)));
 
             if (    single_file
                  && (pos.pieces(~strongSide, KING) & (adjacent_files_bb(pawn_file) | file_bb(pawn_file))))
