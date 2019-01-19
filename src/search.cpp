@@ -315,7 +315,6 @@ void Thread::search() {
   MainThread* mainThread = (this == Threads.main() ? Threads.main() : nullptr);
   double timeReduction = 1.0;
   Color us = rootPos.side_to_move();
-  bool failedLow;
 
   std::memset(ss-5, 0, 8 * sizeof(Stack));
   for (int i = 5; i > 0; i--)
@@ -326,7 +325,7 @@ void Thread::search() {
   beta = VALUE_INFINITE;
 
   if (mainThread)
-      mainThread->bestMoveChanges = 0, failedLow = false;
+      mainThread->bestMoveChanges = 0;
 
   size_t multiPV = Options["MultiPV"];
   Skill skill(Options["Skill Level"]);
@@ -367,7 +366,7 @@ void Thread::search() {
 
       // Age out PV variability metric
       if (mainThread)
-          mainThread->bestMoveChanges *= 0.517, failedLow = false;
+          mainThread->bestMoveChanges *= 0.517;
 
       // Save the last iteration's scores before first PV line is searched and
       // all the move scores except the (new) PV are set to -VALUE_INFINITE.
@@ -447,7 +446,6 @@ void Thread::search() {
                   if (mainThread)
                   {
                       failedHighCnt = 0;
-                      failedLow = true;
                       Threads.stopOnPonderhit = false;
                   }
               }
@@ -500,8 +498,8 @@ void Thread::search() {
           && !Threads.stopOnPonderhit)
       {
           int eval_change = mainThread->previousScore - bestValue;
-          int eval_change_scaled = 600*eval_change*abs(eval_change)/((abs(bestValue)+300)*(abs(eval_change)+5));
-          double fallingEval = (306 + 119 * failedLow + 6 * eval_change_scaled) / 581.0;
+          int scaled = 500*eval_change/(abs(bestValue)+450);
+          double fallingEval = (902 + ((1140 + 28 * sqrt(scaled))*scaled)/100.0) / 2000.0;
           fallingEval        = std::max(0.5, std::min(1.5, fallingEval));
 
           // If the bestMove is stable over several iterations, reduce time accordingly
