@@ -366,6 +366,27 @@ void Position::set_check_info(StateInfo* si) const {
   si->checkSquares[ROOK]   = attacks_from<ROOK>(ksq);
   si->checkSquares[QUEEN]  = si->checkSquares[BISHOP] | si->checkSquares[ROOK];
   si->checkSquares[KING]   = 0;
+
+
+  ///FIXME : this code is not related to check, but use similar logic to blockersForKing.Move it elsewhere ?
+
+  si->blockersForQueen[WHITE] = ~AllSquares;
+  si->blockersForQueen[BLACK] = ~AllSquares;
+
+  const Square* qpw = squares<QUEEN>(WHITE);
+  const Square* qpb = squares<QUEEN>(BLACK);
+
+  Square s;
+
+  while ((s = *qpw++) != SQ_NONE)
+  {
+      si->blockersForQueen[WHITE] |= slider_blockers(pieces(BLACK), s, si->queen_pinners[BLACK]);
+  }
+
+  while ((s = *qpb++) != SQ_NONE)
+  {
+      si->blockersForQueen[BLACK] |= slider_blockers(pieces(WHITE), s, si->queen_pinners[WHITE]);
+  }
 }
 
 

@@ -286,7 +286,7 @@ namespace {
     const Square* pl = pos.squares<Pt>(Us);
 
     Bitboard b, bb;
-    Square s;
+    Square s, sq;
     Score score = SCORE_ZERO;
 
     attackedBy[Us][Pt] = 0;
@@ -300,6 +300,19 @@ namespace {
 
         if (pos.blockers_for_king(Us) & s)
             b &= LineBB[pos.square<KING>(Us)][s];
+
+        // FIXME : This will miss situations where the blocker can capture the
+        //         enemy queen or trigger a check and hence isn't really pinned
+        if (Pt != QUEEN && pos.blockers_for_queen(Us) & s)
+        {
+            const Square* qs = pos.squares<QUEEN>(Us);
+            // FIXME : Actually stupid with multiple queens,
+            // but we don't know which queen is protected right now
+            while ((sq = *qs++) != SQ_NONE)
+            {
+                b &= LineBB[sq][s];
+            }
+        }
 
         attackedBy2[Us] |= attackedBy[Us][ALL_PIECES] & b;
         attackedBy[Us][Pt] |= b;
