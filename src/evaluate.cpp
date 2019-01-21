@@ -352,7 +352,7 @@ namespace {
                     // be extremely powerful if it blocks queening and protects
                     // queening.
                     if (   pos.non_pawn_material(Them) < RookValueMg
-                        && (pe->passed_pawns(Us) & (((DarkSquares & s) ^ (Us == WHITE)) ? FileHBB : FileABB))
+                        && (pe->passed_pawns(Us) & ((bool(DarkSquares & s) != (Us == WHITE)) ? FileABB : FileHBB))
                         && !(pe->passed_pawns(Them) & ((DarkSquares & s) ? ((Us == WHITE) ? AboveDarkDiag : BelowDarkDiag)
                                                                          : ((Us == WHITE) ? AboveLightDiag : BelowLightDiag))))
                     {
