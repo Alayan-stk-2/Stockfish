@@ -155,7 +155,8 @@ namespace {
   constexpr Score BishopPawns        = S(  3,  7);
   constexpr Score CloseEnemies       = S(  8,  0);
   constexpr Score CorneredBishop     = S( 50, 50);
-  constexpr Score Hanging            = S( 69, 36);
+  constexpr Score Hanging            = S( 39, 18);
+  constexpr Score Hanging2           = S( 35, 24);
   constexpr Score KingProtector      = S(  7,  8);
   constexpr Score KnightOnQueen      = S( 16, 12);
   constexpr Score LongDiagonalBishop = S( 45,  0);
@@ -210,11 +211,22 @@ namespace {
     // pawn or squares attacked by 2 pawns are not explicitly added.
     Bitboard attackedBy2[COLOR_NB];
 
+    // attackedByUnpinned[color][piece type] is a bitboard representing all squares
+    // attacked by a given color and piece type without leaving a queen attacked.
+    // Special "piece types" which is also calculated is ALL_PIECES.
+    Bitboard attackedByUnpinned[COLOR_NB][PIECE_TYPE_NB];
+
+    // TODO : nice comment
+    Bitboard attackedBy2Unpinned[COLOR_NB];
+
     // kingRing[color] are the squares adjacent to the king, plus (only for a
     // king on its first rank) the squares two ranks in front. For instance,
     // if black's king is on g8, kingRing[BLACK] is f8, h8, f7, g7, h7, f6, g6
     // and h6.
     Bitboard kingRing[COLOR_NB];
+
+    // TODO : Add nice comment.
+    Bitboard blockersForQueen[COLOR_NB];
 
     // kingAttackersCount[color] is the number of pieces of the given color
     // which attack a square in the kingRing of the enemy king.
@@ -252,11 +264,28 @@ namespace {
     // are excluded from the mobility area.
     mobilityArea[Us] = ~(b | pos.pieces(Us, KING, QUEEN) | pe->pawn_attacks(Them));
 
+    // Set up bitboard of pieces blocking queen from a direct slider attack
+    const Square* qp = pos.squares<QUEEN>(Us);
+    Bitboard queenPinners;
+    Square s;
+
+    blockersForQueen[Us] = 0;
+    while ((s = *qp++) != SQ_NONE)
+    {
+        blockersForQueen[Us] |= pos.slider_blockers(pos.pieces(Them, ROOK, BISHOP), s, queenPinners);
+    }
+
     // Initialise attackedBy bitboards for kings and pawns
     attackedBy[Us][KING] = pos.attacks_from<KING>(pos.square<KING>(Us));
     attackedBy[Us][PAWN] = pe->pawn_attacks(Us);
     attackedBy[Us][ALL_PIECES] = attackedBy[Us][KING] | attackedBy[Us][PAWN];
     attackedBy2[Us]            = attackedBy[Us][KING] & attackedBy[Us][PAWN];
+
+    attackedByUnpinned[Us][KING] = attackedBy[Us][KING];
+    // Incorrect but simpler for now
+    attackedByUnpinned[Us][PAWN] = attackedBy[Us][PAWN];
+    attackedByUnpinned[Us][ALL_PIECES] = attackedByUnpinned[Us][KING] | attackedByUnpinned[Us][PAWN];
+    attackedBy2Unpinned[Us]            = attackedByUnpinned[Us][KING] & attackedByUnpinned[Us][PAWN];
 
     // Init our king safety tables
     kingRing[Us] = attackedBy[Us][KING];
@@ -283,13 +312,15 @@ namespace {
     constexpr Direction Down = (Us == WHITE ? SOUTH : NORTH);
     constexpr Bitboard OutpostRanks = (Us == WHITE ? Rank4BB | Rank5BB | Rank6BB
                                                    : Rank5BB | Rank4BB | Rank3BB);
-    const Square* pl = pos.squares<Pt>(Us);
 
-    Bitboard b, bb;
+    Bitboard b, bb, bu;
     Square s;
     Score score = SCORE_ZERO;
 
     attackedBy[Us][Pt] = 0;
+    attackedByUnpinned[Us][Pt] = 0;
+
+    const Square* pl = pos.squares<Pt>(Us);
 
     while ((s = *pl++) != SQ_NONE)
     {
@@ -304,6 +335,18 @@ namespace {
         attackedBy2[Us] |= attackedBy[Us][ALL_PIECES] & b;
         attackedBy[Us][Pt] |= b;
         attackedBy[Us][ALL_PIECES] |= b;
+
+        bu = b;
+        if (s & blockersForQueen[Us])
+        {
+            const Square* qp = pos.squares<QUEEN>(Us);
+            // FIXME : incorrect for 2+ queens
+            bu &= LineBB[*qp][s];
+        }
+
+        attackedBy2Unpinned[Us] |= attackedByUnpinned[Us][ALL_PIECES] & bu;
+        attackedByUnpinned[Us][Pt] |= bu;
+        attackedByUnpinned[Us][ALL_PIECES] |= bu;
 
         if (b & kingRing[Them])
         {
@@ -501,7 +544,7 @@ namespace {
     constexpr Direction Up       = (Us == WHITE ? NORTH   : SOUTH);
     constexpr Bitboard  TRank3BB = (Us == WHITE ? Rank3BB : Rank6BB);
 
-    Bitboard b, weak, defended, nonPawnEnemies, stronglyProtected, safe, restricted;
+    Bitboard b, bb, weak, defended, nonPawnEnemies, stronglyProtected, safe, restricted;
     Score score = SCORE_ZERO;
 
     // Non-pawn enemies
@@ -547,7 +590,11 @@ namespace {
 
         b =  ~attackedBy[Them][ALL_PIECES]
            | (nonPawnEnemies & attackedBy2[Us]);
+        bb = ( ~attackedByUnpinned[Them][ALL_PIECES]
+              & attackedByUnpinned[Us][ALL_PIECES])
+            | (nonPawnEnemies & attackedBy2Unpinned[Us]);
         score += Hanging * popcount(weak & b);
+        score += Hanging2 * popcount(weak & bb);
     }
 
     // Bonus for restricting their piece moves
