@@ -159,6 +159,7 @@ namespace {
   constexpr Score KingProtector      = S(  7,  8);
   constexpr Score KnightOnQueen      = S( 16, 12);
   constexpr Score LongDiagonalBishop = S( 45,  0);
+  constexpr Score MasterBishop       = S(  0,120);
   constexpr Score MinorBehindPawn    = S( 18,  3);
   constexpr Score PawnlessFlank      = S( 17, 95);
   constexpr Score RestrictedPiece    = S(  7,  7);
@@ -344,7 +345,20 @@ namespace {
 
                 // Bonus for bishop on a long diagonal which can "see" both center squares
                 if (more_than_one(attacks_bb<BISHOP>(s, pos.pieces(PAWN)) & Center))
+                {
                     score += LongDiagonalBishop;
+
+                    // If the enemy has only one minor, a long diagonal bishop can
+                    // be extremely powerful if it blocks queening and protects
+                    // queening.
+                    if (   pos.non_pawn_material(Them) < RookValueMg
+                        && (pe->passed_pawns(Us) & ((DarkSquares & s) ? FileABB : FileHBB))
+                        && !(pe->passed_pawns(Them) & ((DarkSquares & s) ? ((Us == WHITE) ? AboveDarkDiag : BelowDarkDiag)
+                                                                         : ((Us == WHITE) ? AboveLightDiag : BelowLightDiag)))
+                    {
+                        score += MasterBishop;
+                    }
+                }
             }
 
             // An important Chess960 pattern: A cornered bishop blocked by a friendly

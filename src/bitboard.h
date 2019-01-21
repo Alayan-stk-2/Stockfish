@@ -42,6 +42,11 @@ const std::string pretty(Bitboard b);
 constexpr Bitboard AllSquares = ~Bitboard(0);
 constexpr Bitboard DarkSquares = 0xAA55AA55AA55AA55ULL;
 
+constexpr Bitboard AboveLightDiag = 0xFEFCF8F0E0C08000ULL;
+constexpr Bitboard BelowLightDiag = 0x000103070F1F3F7FULL;
+constexpr Bitboard AboveDarkDiag  = 0x7F3F1F0F07030100ULL;
+constexpr Bitboard BelowDarkDiag  = 0x0080C0E0F0F8FCFEULL;
+
 constexpr Bitboard FileABB = 0x0101010101010101ULL;
 constexpr Bitboard FileBBB = FileABB << 1;
 constexpr Bitboard FileCBB = FileABB << 2;
