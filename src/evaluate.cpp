@@ -354,7 +354,7 @@ namespace {
                     if (   pos.non_pawn_material(Them) < RookValueMg
                         && (pe->passed_pawns(Us) & ((DarkSquares & s) ? FileABB : FileHBB))
                         && !(pe->passed_pawns(Them) & ((DarkSquares & s) ? ((Us == WHITE) ? AboveDarkDiag : BelowDarkDiag)
-                                                                         : ((Us == WHITE) ? AboveLightDiag : BelowLightDiag)))
+                                                                         : ((Us == WHITE) ? AboveLightDiag : BelowLightDiag))))
                     {
                         score += MasterBishop;
                     }
