@@ -508,7 +508,7 @@ namespace {
             king_cover_pawns += (3 - king_distance(Us, s)) * (int)relative_rank(Them, s);
         }
 
-        score += make_score(0, 2*king_cover_pawns);
+        score += make_score(0, 4*king_cover_pawns);
     }
 
     // King tropism bonus, to anticipate slow motion attacks on our king
