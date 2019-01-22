@@ -507,7 +507,7 @@ namespace {
 
         while ((s = *pp++) != SQ_NONE)
         {
-            ts = (5 - king_distance(Us, s)) * (int)relative_rank(Them, s)
+            ts = (5 - king_distance(Us, s)) * (int)relative_rank(Them, s);
             king_cover_pawns += ts*ts - 200;
         }
 
