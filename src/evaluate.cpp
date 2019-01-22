@@ -493,22 +493,25 @@ namespace {
         };
 
         int king_cover_pawns = 0;
+        int ts;
         const Square* pp = pos.squares<PAWN>(Us);
         Square s;
 
         while ((s = *pp++) != SQ_NONE)
         {
-            king_cover_pawns += (4 - king_distance(Us, s)) * (int)relative_rank(Us, s);
+            ts = (5 - king_distance(Us, s)) * (int)relative_rank(Us, s);
+            king_cover_pawns += ts*ts - 200;
         }
 
         pp = pos.squares<PAWN>(Them);
 
         while ((s = *pp++) != SQ_NONE)
         {
-            king_cover_pawns += (3 - king_distance(Us, s)) * (int)relative_rank(Them, s);
+            ts = (5 - king_distance(Us, s)) * (int)relative_rank(Them, s)
+            king_cover_pawns += ts*ts - 200;
         }
 
-        score += make_score(0, 2*king_cover_pawns);
+        score += make_score(0, king_cover_pawns/20);
     }
 
     // King tropism bonus, to anticipate slow motion attacks on our king
