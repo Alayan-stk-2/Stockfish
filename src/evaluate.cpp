@@ -482,6 +482,35 @@ namespace {
     if (!(pos.pieces(PAWN) & kingFlank))
         score -= PawnlessFlank;
 
+    // In KRBxP KRBxP endgames, a centralized king able to support its pawns
+    // suffer from little risk and can allow a decisive local attacking superiority
+
+    if (    pos.non_pawn_material(WHITE) == (BishopValueMg + RookValueMg)
+        &&  pos.non_pawn_material(WHITE) == pos.non_pawn_material(BLACK))
+    {
+        auto king_distance = [&](Color c, Square s) {
+          return std::min(distance(pos.square<KING>(c), s), 5);
+        };
+
+        int king_cover_pawns = 0;
+        const Square* pp = pos.squares<PAWN>(Us);
+        Square s;
+
+        while ((s = *pp++) != SQ_NONE)
+        {
+            king_cover_pawns += (4 - king_distance(Us, s)) * (int)relative_rank(Us, s);
+        }
+
+        pp = pos.squares<PAWN>(Them);
+
+        while ((s = *pp++) != SQ_NONE)
+        {
+            king_cover_pawns += (3 - king_distance(Us, s)) * (int)relative_rank(Them, s);
+        }
+
+        score += make_score(0, 2*king_cover_pawns);
+    }
+
     // King tropism bonus, to anticipate slow motion attacks on our king
     score -= CloseEnemies * tropism;
 
