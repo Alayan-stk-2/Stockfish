@@ -53,27 +53,34 @@ namespace {
     {  97,  100, -42,   137,  268,    0 }  // Queen
   };
 
-  int A1 = 0;
-  int A2 = 0;
-  int A3 = 0;
-  int A4 = 0;
-  int A5 = 0;
-  int A6 = 0;
-  int B1 = 0;
-  int B2 = 0;
-  int B3 = 0;
-  int B4 = 0;
-  int B5 = 0;
-  int B6 = 0;
-  int C1 = 0;
-  int C2 = 0;
-  int C3 = 0;
-  int D1 = 0;
-  int D2 = 0;
-  int D3 = 0;
+  int A1 = 277;
+  int A2 =-313;
+  int A3 =   7;
+  int A4 =-157;
+  int A5 =  87;
+  int A6 =  85;
+  int B1 = -16;
+  int B2 =-313;
+  int B3 =-160;
+  int B4 = -56;
+  int B5 = 192;
+  int B6 = -89;
+  int C1 = 268;
+  int C2 = -99;
+  int C3 =  98;
+  int C4 = 268;
+  int C5 = -99;
+  int C6 =  98;
+  int D1 = -40;
+  int D2 = 390;
+  int D3 =  47;
+  int D4 = -40;
+  int D5 = 390;
+  int D6 =  47;
 
-  TUNE(SetRange(-500, 500), A1, A2, A4, A5, B1, B2, B4, B5, C1, C2, D1, D2);
-  TUNE(SetRange(-200, 200), A3, A6, B3, B6, C3, D3);
+  TUNE(SetRange(   0, 600), A1, B5, C1, C4, D2, D5);
+  TUNE(SetRange(-500,   0), A2, A4, B2, B3);
+  TUNE(SetRange(-300, 300), A3, A5, A6, B1, B4, B6, C2, C3, C5, C6, D1, D3, D4, D6);
 
   // Endgame evaluation and scaling functions are accessed directly and not through
   // the function maps because they correspond to more than one material hash key.
@@ -161,13 +168,21 @@ namespace {
     // 2 rooks vs queen
     if(rook_diff == 2 && queen_diff == -1)
     {
-        bonus += C1 + C2*pawn_diff + C3*total_pawns;
+        // Separate bonus when there is no minor on board
+        if (minor_diff == 0 && pieceCount[Us][BISHOP] + pieceCount[Us][KNIGHT] == 0)
+            bonus += C1 + C2*pawn_diff + C3*total_pawns;
+        else
+            bonus += C4 + C5*pawn_diff + C6*total_pawns;
     }
 
     // minor+rook vs queen
     if(minor_diff == 1 && rook_diff == 1 && queen_diff == -1)
     {
-        bonus += D1 + D2*pawn_diff + D3*total_pawns;
+        // Separate bonus depending on if the enemy queen is assisted by a rook or not
+        if (pieceCount[Them][ROOK] == 0)
+            bonus += D1 + D2*pawn_diff + D3*total_pawns;
+        else
+            bonus += D4 + D5*pawn_diff + D6*total_pawns;
     }
 
     return bonus;
