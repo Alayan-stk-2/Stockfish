@@ -106,6 +106,56 @@ namespace {
         bonus += pieceCount[Us][pt1] * v;
     }
 
+    int minor_diff  = pieceCount[Us][KNIGHT] + pieceCount[Us][BISHOP] - pieceCount[Them][KNIGHT] - pieceCount[Them][BISHOP];
+    int rook_diff   = pieceCount[Us][ROOK]  - pieceCount[Them][ROOK];
+    int queen_diff  = pieceCount[Us][QUEEN] - pieceCount[Them][QUEEN];
+    int pawn_diff   = pieceCount[Us][PAWN]  - pieceCount[Them][PAWN];
+    int total_pawns = pieceCount[Us][PAWN]  + pieceCount[Them][PAWN];
+
+    // We only need to score these imbalances from one side.
+    // The position evaluation will evaluate both colors,
+    // so one of them will always count it in the score.
+
+    // 3 minors vs 2 rooks
+    if(minor_diff == 3 && rook_diff == -2)
+    {
+        // Separate bonus for queenless case
+        if (pieceCount[Us][QUEEN] + pieceCount[Them][QUEEN] == 0)
+            bonus +=  218 - 334*pawn_diff + 33*total_pawns;
+        else
+            bonus += -200 + 141*pawn_diff + 58*total_pawns;
+    }
+
+    // 3 minors vs queen
+    if(minor_diff == 3 && queen_diff == -1)
+    {
+        // Separate bonus for rookless case
+        if (pieceCount[Us][ROOK] + pieceCount[Them][ROOK] == 0)
+            bonus +=  8 - 368*pawn_diff - 135*total_pawns;
+        else
+            bonus +=-62 + 200*pawn_diff - 32*total_pawns;
+    }
+
+    // 2 rooks vs queen
+    if(rook_diff == 2 && queen_diff == -1)
+    {
+        // Separate bonus when there is no minor on board
+        if (minor_diff == 0 && pieceCount[Us][BISHOP] + pieceCount[Us][KNIGHT] == 0)
+            bonus += 269 -  97*pawn_diff +  98*total_pawns;
+        else
+            bonus += 302 - 125*pawn_diff + 121*total_pawns;
+    }
+
+    // minor+rook vs queen
+    if(minor_diff == 1 && rook_diff == 1 && queen_diff == -1)
+    {
+        // Separate bonus depending on if the enemy queen is assisted by a rook or not
+        if (pieceCount[Them][ROOK] == 0)
+            bonus +=-59 + 388*pawn_diff - 7*total_pawns;
+        else
+            bonus +=-71 + 456*pawn_diff +  2*total_pawns;
+    }
+
     return bonus;
   }
 
