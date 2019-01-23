@@ -53,6 +53,28 @@ namespace {
     {  97,  100, -42,   137,  268,    0 }  // Queen
   };
 
+  int A1 = 0;
+  int A2 = 0;
+  int A3 = 0;
+  int A4 = 0;
+  int A5 = 0;
+  int A6 = 0;
+  int B1 = 0;
+  int B2 = 0;
+  int B3 = 0;
+  int B4 = 0;
+  int B5 = 0;
+  int B6 = 0;
+  int C1 = 0;
+  int C2 = 0;
+  int C3 = 0;
+  int D1 = 0;
+  int D2 = 0;
+  int D3 = 0;
+
+  TUNE(SetRange(-500, 500), A1, A2, A4, A5, B1, B2, B4, B5, C1, C2, D1, D2);
+  TUNE(SetRange(-200, 200), A3, A6, B3, B6, C3, D3);
+
   // Endgame evaluation and scaling functions are accessed directly and not through
   // the function maps because they correspond to more than one material hash key.
   Endgame<KXK>    EvaluateKXK[] = { Endgame<KXK>(WHITE),    Endgame<KXK>(BLACK) };
@@ -104,6 +126,48 @@ namespace {
                 + QuadraticTheirs[pt1][pt2] * pieceCount[Them][pt2];
 
         bonus += pieceCount[Us][pt1] * v;
+    }
+
+    int minor_diff  = pieceCount[Us][KNIGHT] + pieceCount[Us][BISHOP] - pieceCount[Them][KNIGHT] - pieceCount[Them][BISHOP];
+    int rook_diff   = pieceCount[Us][ROOK]  - pieceCount[Them][ROOK];
+    int queen_diff  = pieceCount[Us][QUEEN] - pieceCount[Them][QUEEN];
+    int pawn_diff   = pieceCount[Us][PAWN]  - pieceCount[Them][PAWN];
+    int total_pawns = pieceCount[Us][PAWN]  + pieceCount[Them][PAWN];
+
+    // We only need to score these imbalances from one side.
+    // The position evaluation will evaluate both colors,
+    // so one of them will always count it in the score.
+
+    // 3 minors vs 2 rooks
+    if(minor_diff == 3 && rook_diff == -2)
+    {
+        // Separate bonus for queenless case
+        if (pieceCount[Us][QUEEN] + pieceCount[Them][QUEEN] == 0)
+            bonus += A1 + A2*pawn_diff + A3*total_pawns;
+        else
+            bonus += A4 + A5*pawn_diff + A6*total_pawns;
+    }
+
+    // 3 minors vs queen
+    if(minor_diff == 3 && queen_diff == -1)
+    {
+        // Separate bonus for rookless case
+        if (pieceCount[Us][ROOK] + pieceCount[Them][ROOK] == 0)
+            bonus += B1 + B2*pawn_diff + B3*total_pawns;
+        else
+            bonus += B4 + B5*pawn_diff + B6*total_pawns;
+    }
+
+    // 2 rooks vs queen
+    if(rook_diff == 2 && queen_diff == -1)
+    {
+        bonus += C1 + C2*pawn_diff + C3*total_pawns;
+    }
+
+    // minor+rook vs queen
+    if(minor_diff == 1 && rook_diff == 1 && queen_diff == -1)
+    {
+        bonus += D1 + D2*pawn_diff + D3*total_pawns;
     }
 
     return bonus;
