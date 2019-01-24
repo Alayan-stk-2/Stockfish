@@ -337,7 +337,7 @@ namespace {
         attackedBy[Us][ALL_PIECES] |= b;
 
         bu = b;
-        if (s & blockersForQueen[Us])
+        if (blockersForQueen[Us] & s)
         {
             const Square* qp = pos.squares<QUEEN>(Us);
             // FIXME : incorrect for 2+ queens
