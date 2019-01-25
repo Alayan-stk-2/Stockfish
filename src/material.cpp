@@ -157,7 +157,7 @@ namespace {
             bonus2 +=-22 + 448*pawn_diff + 26*total_pawns;
     }
 
-    return bonus+bonus2;
+    return bonus+(bonus2/2);
   }
 
 } // namespace
