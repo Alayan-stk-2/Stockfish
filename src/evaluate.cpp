@@ -340,7 +340,15 @@ namespace {
                 // bishop, bigger when the center files are blocked with pawns.
                 Bitboard blocked = pos.pieces(Us, PAWN) & shift<Down>(pos.pieces());
 
-                Bitboard same_color_pawns = pe->pawnOnSquaresBB(Us, bool(DarkSquares & s) ? BLACK : WHITE) & ~HighRanks;
+                Bitboard same_color_pawns = pe->pawnOnSquaresBB(Us, bool(DarkSquares & s) ? BLACK : WHITE);
+
+                if(   pos.non_pawn_material(Us) > BishopValueMg
+                   && (  pos.count<ALL_PIECES>(Us)   - pos.count<PAWN>(Us)
+                       - pos.count<ALL_PIECES>(Them) + pos.count<PAWN>(Them) >= 0))
+                {
+                    blocked &= ~HighRanks;
+                    same_color_pawns &= ~HighRanks;
+                }
 
                 score -= BishopPawns * popcount(same_color_pawns)
                                      * (1 + popcount(blocked & CenterFiles));
