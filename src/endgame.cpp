@@ -290,12 +290,13 @@ Value Endgame<KQKR>::operator()(const Position& pos) const {
 template<> Value Endgame<KNNK>::operator()(const Position&) const { return VALUE_DRAW; }
 
 
-/// KB and one or more pawns vs K. It checks for draws with rook pawns and
-/// a bishop of the wrong color. If such a draw is detected, SCALE_FACTOR_DRAW
+/// KB and one or more pawns vs K and one or more pawns.. It checks for draws
+/// with rook pawns and a bishop of the wrong color, and for draws on B and G
+/// files with a defending pawn. If such a draw is detected, SCALE_FACTOR_DRAW
 /// is returned. If not, the return value is SCALE_FACTOR_NONE, i.e. no scaling
 /// will be used.
 template<>
-ScaleFactor Endgame<KBPsK>::operator()(const Position& pos) const {
+ScaleFactor Endgame<KBPsKPs>::operator()(const Position& pos) const {
 
   assert(pos.non_pawn_material(strongSide) == BishopValueMg);
   assert(pos.count<PAWN>(strongSide) >= 1);
@@ -303,12 +304,12 @@ ScaleFactor Endgame<KBPsK>::operator()(const Position& pos) const {
   // No assertions about the material of weakSide, because we want draws to
   // be detected even when the weaker side has some pawns.
 
-  Bitboard pawns = pos.pieces(strongSide, PAWN);
-  File pawnsFile = file_of(lsb(pawns));
+  Bitboard strongSidePawns = pos.pieces(strongSide, PAWN);
+  File pawnsFile = file_of(lsb(strongSidePawns));
 
-  // All pawns are on a single rook file?
+  // All strongSide pawns are on a single rook file?
   if (    (pawnsFile == FILE_A || pawnsFile == FILE_H)
-      && !(pawns & ~file_bb(pawnsFile)))
+      && !(strongSidePawns & ~file_bb(pawnsFile)))
   {
       Square bishopSq = pos.square<BISHOP>(strongSide);
       Square queeningSq = relative_square(strongSide, make_square(pawnsFile, RANK_8));
@@ -319,38 +320,72 @@ ScaleFactor Endgame<KBPsK>::operator()(const Position& pos) const {
           return SCALE_FACTOR_DRAW;
   }
 
-  // If all the pawns are on the same B or G file, then it's potentially a draw
+  // If all the strongSide pawns are on the same B or G file,
+  // then it's a draw if the weakSide has a pawn on home rank
+  // and there is one strongSide pawn in front of it.
   if (    (pawnsFile == FILE_B || pawnsFile == FILE_G)
-      && !(pos.pieces(PAWN) & ~file_bb(pawnsFile))
-      && pos.non_pawn_material(weakSide) == 0
-      && pos.count<PAWN>(weakSide) >= 1)
+      && !(strongSidePawns & ~file_bb(pawnsFile))
+      && pos.count<PAWN>(weakSide) >= 1 //FIXME test removal
+      && (pos.pieces(weakSide, PAWN) & file_bb(pawnsFile)))
   {
-      // Get weakSide pawn that is closest to the home rank
-      Square weakPawnSq = backmost_sq(weakSide, pos.pieces(weakSide, PAWN));
+      // Get weakSide pawn that is closest to the home rank on the relevant file.
+      Square weakPawnSq = backmost_sq(weakSide, pos.pieces(weakSide, PAWN) & file_bb(pawnsFile));
 
       Square strongKingSq = pos.square<KING>(strongSide);
       Square weakKingSq = pos.square<KING>(weakSide);
       Square bishopSq = pos.square<BISHOP>(strongSide);
 
-      // There's potential for a draw if our pawn is blocked on the 7th rank,
-      // the bishop cannot attack it or they only have one pawn left
+      // There's potential for a draw if our pawn is blocked on the 6th rank
+      // by a pawn on its starting position (blocking pawn on 7th rank from our side).
       if (   relative_rank(strongSide, weakPawnSq) == RANK_7
-          && (pos.pieces(strongSide, PAWN) & (weakPawnSq + pawn_push(weakSide)))
-          && (opposite_colors(bishopSq, weakPawnSq) || pos.count<PAWN>(strongSide) == 1))
+          && (pos.pieces(strongSide, PAWN) & (weakPawnSq + pawn_push(weakSide))))
       {
           int strongKingDist = distance(weakPawnSq, strongKingSq);
           int weakKingDist = distance(weakPawnSq, weakKingSq);
 
-          // It's a draw if the weak king is on its back two ranks, within 2
+          bool is_draw = false;
+
+          // If the bishop is of opposite color to the defending pawn,
+          // the weak side king can block the attacking king in almost all cases.
+          if(   opposite_colors(bishopSq, weakPawnSq))
+          {
+              if (   relative_rank(strongSide, strongKingSq) >= RANK_7
+                  && relative_rank(strongSide, weakKingSq)   >= RANK_7
+                  && weakKingDist < strongKingDist)
+                  is_draw = true;
+              else if (relative_rank(strongSide, strongKingSq) <= RANK_6)
+              {
+                  // It is a draw if the weakSide can block the strongSide king
+                  // from going through the attKeySq and can't be blocked from
+                  // going on the defKeySq
+                  Square attKeySq = make_square((pawnsFile == FILE_B) ? FILE_D : FILE_E, relative_rank(strongSide, RANK_6));
+                  Square defKeySq = attKeySq + (strongSide == WHITE ? NORTH : SOUTH);
+
+                  // Some positions where the distances are equal are winning.
+                  // Trying to avoid the draw eval will push search to find the winning line.
+                  if(   distance(attKeySq, strongKingSq) >= distance(attKeySq, weakKingSq)
+                     && distance(defKeySq, strongKingSq) >= distance(defKeySq, weakKingSq))
+                      is_draw = true;
+              }
+          }
+          // If the bishop is of the correct color to attack the defending pawn,
+          // it's a draw if the weak king is on its back two ranks, within 2
           // squares of the blocking pawn and the strong king is not
           // closer. (I think this rule only fails in practically
-          // unreachable positions such as 5k1K/6p1/6P1/8/8/3B4/8/8 w
+          // unreachable positions such as 5k1K/6p1/6P1/8/3B4/8/8/8 w
           // and positions where qsearch will immediately correct the
           // problem such as 8/4k1p1/6P1/1K6/3B4/8/8/8 w)
-          if (   relative_rank(strongSide, weakKingSq) >= RANK_7
+          else if (   relative_rank(strongSide, weakKingSq) >= RANK_7
               && weakKingDist <= 2
               && weakKingDist <= strongKingDist)
+          {
+              is_draw = true;
+          }
+
+          if (is_draw)
               return SCALE_FACTOR_DRAW;
+
+
       }
   }
 

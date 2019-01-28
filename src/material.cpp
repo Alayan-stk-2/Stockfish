@@ -55,12 +55,12 @@ namespace {
 
   // Endgame evaluation and scaling functions are accessed directly and not through
   // the function maps because they correspond to more than one material hash key.
-  Endgame<KXK>    EvaluateKXK[] = { Endgame<KXK>(WHITE),    Endgame<KXK>(BLACK) };
+  Endgame<KXK>     EvaluateKXK[]  = { Endgame<KXK>(WHITE),     Endgame<KXK>(BLACK) };
 
-  Endgame<KBPsK>  ScaleKBPsK[]  = { Endgame<KBPsK>(WHITE),  Endgame<KBPsK>(BLACK) };
-  Endgame<KQKRPs> ScaleKQKRPs[] = { Endgame<KQKRPs>(WHITE), Endgame<KQKRPs>(BLACK) };
-  Endgame<KPsK>   ScaleKPsK[]   = { Endgame<KPsK>(WHITE),   Endgame<KPsK>(BLACK) };
-  Endgame<KPKP>   ScaleKPKP[]   = { Endgame<KPKP>(WHITE),   Endgame<KPKP>(BLACK) };
+  Endgame<KBPsKPs> ScaleKBPsKPs[] = { Endgame<KBPsKPs>(WHITE), Endgame<KBPsKPs>(BLACK) };
+  Endgame<KQKRPs>  ScaleKQKRPs[]  = { Endgame<KQKRPs>(WHITE),  Endgame<KQKRPs>(BLACK) };
+  Endgame<KPsK>    ScaleKPsK[]    = { Endgame<KPsK>(WHITE),    Endgame<KPsK>(BLACK) };
+  Endgame<KPKP>    ScaleKPKP[]    = { Endgame<KPKP>(WHITE),    Endgame<KPKP>(BLACK) };
 
   // Helper used to detect a given material distribution
   bool is_KXK(const Position& pos, Color us) {
@@ -68,9 +68,11 @@ namespace {
           && pos.non_pawn_material(us) >= RookValueMg;
   }
 
-  bool is_KBPsK(const Position& pos, Color us) {
-    return   pos.non_pawn_material(us) == BishopValueMg
-          && pos.count<BISHOP>(us) == 1
+  // This is also by default isused by KBPsKB and KBPsKN
+  // The assumption is that any draw under KBPsK will also
+  // be a draw with these additional minor.
+  bool is_KBPsKPs(const Position& pos, Color us) {
+    return   pos.non_pawn_material(us)  == BishopValueMg
           && pos.count<PAWN  >(us) >= 1;
   }
 
@@ -165,8 +167,8 @@ Entry* probe(const Position& pos) {
   // case we don't return after setting the function.
   for (Color c = WHITE; c <= BLACK; ++c)
   {
-    if (is_KBPsK(pos, c))
-        e->scalingFunction[c] = &ScaleKBPsK[c];
+    if (is_KBPsKPs(pos, c))
+        e->scalingFunction[c] = &ScaleKBPsKPs[c];
 
     else if (is_KQKRPs(pos, c))
         e->scalingFunction[c] = &ScaleKQKRPs[c];
