@@ -102,11 +102,6 @@ namespace {
   // MobilityBonus[PieceType-2][attacked] contains bonuses for middle and end game,
   // indexed by piece type and number of attacked squares in the mobility area.
   constexpr Score MobilityBonus[][32] = {
-    { S(-62,-81), S(-53,-56), S(-12,-30), S( -4,-14), S(  3,  8), S( 13, 15), // Knights
-      S( 22, 23), S( 28, 27), S( 33, 33) },
-    { S(-48,-59), S(-20,-23), S( 16, -3), S( 26, 13), S( 38, 24), S( 51, 42), // Bishops
-      S( 55, 54), S( 63, 57), S( 63, 65), S( 68, 73), S( 81, 78), S( 81, 86),
-      S( 91, 88), S( 98, 97) },
     { S(-58,-76), S(-27,-18), S(-15, 28), S(-10, 55), S( -5, 69), S( -2, 82), // Rooks
       S(  9,112), S( 16,118), S( 30,132), S( 29,142), S( 32,155), S( 38,165),
       S( 46,166), S( 48,169), S( 58,171) },
@@ -115,6 +110,33 @@ namespace {
       S( 60,113), S( 66,120), S( 67,123), S( 70,126), S( 71,133), S( 73,136),
       S( 79,140), S( 88,143), S( 88,148), S( 99,166), S(102,170), S(102,175),
       S(106,184), S(109,191), S(113,206), S(116,212) }
+  };
+
+  // KnightMobilityBonus[attacked] contains bonuses for middle and end game,
+  // indexed by number of attacked squares in the mobility area.
+  constexpr Score KnightMobilityBonus[9] = {
+      S(-62,-81), S(-53,-56), S(-12,-30), S( -4,-14), S(  3,  8), S( 13, 15),
+      S( 22, 23), S( 28, 27), S( 33, 33)
+  };
+
+  // BishopMobilityBonus[denied][attacked] contains bonuses for middle and end game,
+  // indexed by number of attacked squares in the mobility area and number of
+  // pieces denied from mobility area by enemy pawn attacks.
+  // Max value of denied is 9, but if denied > 4 it is capped to 4 to limit array
+  // size as in practice denied >= 5 is very rare.
+  constexpr Score BishopMobilityBonus[5][14] = {
+    { S(-59,-62), S(-19,-17), S( 15, -9), S( 28, 17), S( 47, 19), S( 52, 52), // 0 denied square
+      S( 53, 63), S( 78, 50), S( 62, 74), S( 59, 73), S( 88, 84), S( 88, 89),
+      S( 91, 94), S( 93, 97) },
+    { S(-59,-62), S(-24,-26), S( 21, -9), S( 26, 22), S( 32, 22), S( 58, 27), // 1 denied square
+      S( 60, 63), S( 72, 52), S( 57, 60), S( 67, 81), S( 75, 74), S( 76, 88),
+      S( 87, 88) },
+    { S(-56,-48), S(-29,-14), S(  9,  3), S( 20, 32), S( 40, 12), S( 43, 57), // 2 denied squares0
+      S( 49, 52), S( 63, 58), S( 75, 71), S( 76, 67), S( 81, 82), S( 75, 83) },
+    { S(-49,-46), S(-19,-26), S( 25,  0), S( 32,  3), S( 27, 23), S( 53, 36), // 3 denied squares
+      S( 57, 62), S( 65, 51), S( 75, 68), S( 73, 76), S( 79, 70) },
+    { S(-41,-78), S(-38,-15), S(  6,-12), S( 27, 13), S( 34,  9), S( 58, 38), // 4+ denied squares
+      S( 43, 64), S( 57, 62), S( 71, 67), S( 66, 76) },
   };
 
   // Outpost[knight/bishop][supported by pawn] contains bonuses for minor
@@ -198,6 +220,7 @@ namespace {
     Material::Entry* me;
     Pawns::Entry* pe;
     Bitboard mobilityArea[COLOR_NB];
+    Bitboard deniedMobilityArea[COLOR_NB];
     Score mobility[COLOR_NB] = { SCORE_ZERO, SCORE_ZERO };
 
     // attackedBy[color][piece type] is a bitboard representing all squares
@@ -251,6 +274,8 @@ namespace {
     // Squares occupied by those pawns, by our king or queen, or controlled by enemy pawns
     // are excluded from the mobility area.
     mobilityArea[Us] = ~(b | pos.pieces(Us, KING, QUEEN) | pe->pawn_attacks(Them));
+
+    deniedMobilityArea[Us] = pe->pawn_attacks(Them) & ~(b | pos.pieces(Us, KING, QUEEN));
 
     // Initialise attackedBy bitboards for kings and pawns
     attackedBy[Us][KING] = pos.attacks_from<KING>(pos.square<KING>(Us));
@@ -314,7 +339,22 @@ namespace {
 
         int mob = popcount(b & mobilityArea[Us]);
 
-        mobility[Us] += MobilityBonus[Pt - 2][mob];
+        if (Pt == BISHOP)
+        {
+            int denied_mob = popcount(b & deniedMobilityArea[Us]);
+            if (denied_mob > 4)
+                denied_mob = 4;
+
+            mobility[Us] += BishopMobilityBonus[denied_mob][mob];
+        }
+        else if (Pt == KNIGHT)
+        {
+            mobility[Us] += KnightMobilityBonus[mob];
+        }
+        else
+        {
+            mobility[Us] += MobilityBonus[Pt - 4][mob];
+        }
 
         if (Pt == BISHOP || Pt == KNIGHT)
         {
