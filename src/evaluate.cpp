@@ -92,10 +92,15 @@ namespace {
   constexpr int KingAttackWeights[PIECE_TYPE_NB] = { 0, 0, 77, 55, 44, 10 };
 
   // Penalties for enemy's safe checks
-  constexpr int QueenSafeCheck  = 780;
-  constexpr int RookSafeCheck   = 880;
-  constexpr int BishopSafeCheck = 435;
-  constexpr int KnightSafeCheck = 790;
+  int QueenSafeCheck  =  780;
+  int RookSafeCheck   = 1080;
+  int BishopSafeCheck =  635;
+  int KnightSafeCheck =  790;
+
+  int trop_tune = 80;
+
+TUNE(SetRange(400, 1300), QueenSafeCheck, RookSafeCheck, BishopSafeCheck, KnightSafeCheck);
+TUNE(SetRange(64, 96), trop_tune);
 
 #define S(mg, eg) make_score(mg, eg)
 
@@ -433,22 +438,24 @@ namespace {
 
     b1 = attacks_bb<ROOK  >(ksq, pos.pieces() ^ pos.pieces(Us, QUEEN));
     b2 = attacks_bb<BISHOP>(ksq, pos.pieces() ^ pos.pieces(Us, QUEEN));
-
-    // Enemy queen safe checks
-    if ((b1 | b2) & attackedBy[Them][QUEEN] & safe & ~attackedBy[Us][QUEEN])
-        kingDanger += QueenSafeCheck;
-
-    b1 &= attackedBy[Them][ROOK];
-    b2 &= attackedBy[Them][BISHOP];
-
     // Enemy rooks checks
-    if (b1 & safe)
+    
+    Bitboard RookCheck = b1 & safe & attackedBy[Them][ROOK];
+
+    if (RookCheck)
         kingDanger += RookSafeCheck;
     else
-        unsafeChecks |= b1;
+        unsafeChecks |= b1 & attackedBy[Them][ROOK];
+
+    // Enemy queen safe checks
+    Bitboard QueenCheck = (b1 | b2) & attackedBy[Them][QUEEN] & safe & ~attackedBy[Us][QUEEN] & ~RookCheck;
+    if (QueenCheck)
+        kingDanger += QueenSafeCheck;
+
+    b2 &= attackedBy[Them][BISHOP];
 
     // Enemy bishops checks
-    if (b2 & safe)
+    if (b2 & safe & ~QueenCheck)
         kingDanger += BishopSafeCheck;
     else
         unsafeChecks |= b2;
@@ -468,7 +475,7 @@ namespace {
                  +  69 * kingAttacksCount[Them]
                  + 185 * popcount(kingRing[Us] & weak)
                  + 150 * popcount(pos.blockers_for_king(Us) | unsafeChecks)
-                 +       tropism * tropism / 4
+                 +       tropism * tropism * trop_tune / 256
                  - 873 * !pos.count<QUEEN>(Them)
                  -   6 * mg_value(score) / 8
                  +       mg_value(mobility[Them] - mobility[Us])
