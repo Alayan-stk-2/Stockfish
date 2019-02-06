@@ -80,7 +80,7 @@ constexpr Score Bonus[][RANK_NB][int(FILE_NB) / 2] = {
   }
 };
 
-constexpr Score PBonus[RANK_NB][FILE_NB] =
+Score PBonus[RANK_NB][FILE_NB] =
   { // Pawn (asymmetric distribution)
    { },
    { S(  0,-10), S( -5,-3), S( 10,  7), S( 13, -1), S( 21,  7), S( 17,  6), S(  6,  1), S( -3,-20) },
@@ -91,7 +91,7 @@ constexpr Score PBonus[RANK_NB][FILE_NB] =
    { S(-10, -1), S(  6,-6), S( -5, 18), S(-11, 22), S( -2, 22), S(-14, 17), S( 12,  2), S( -1,  9) }
   };
 
-constexpr Score KBonus[RANK_NB][FILE_NB] =
+Score KBonus[RANK_NB][FILE_NB] =
 { // King
    { S(288, -1), S(345, 22), S(293, 50), S(188, 76), S(186, 79), S(251, 57), S(323, 48), S(268,-11) },
    { S(273, 45), S(276,100), S(262,137), S(185,142), S(187,136), S(231,127), S(297,118), S(279, 46) },
@@ -129,5 +129,8 @@ void init() {
       }
   }
 }
+
+TUNE(SetRange(-50, 375), KBonus, init);
+TUNE(SetRange(-30,  50), PBonus, init);
 
 } // namespace PSQT
