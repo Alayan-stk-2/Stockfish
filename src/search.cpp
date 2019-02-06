@@ -399,10 +399,15 @@ void Thread::search() {
               beta  = std::min(previousScore + delta, VALUE_INFINITE);
 
               // Adjust contempt based on root move's previousScore (dynamic contempt)
-              int dct = ct + 88 * previousScore / (abs(previousScore) + 200);
+              int dct = ct + 128 * previousScore / (abs(previousScore) + 200)
+                           + 2000/(abs(previousScore+50)+100)
+                           - abs(previousScore)/16;
 
-              contempt = (us == WHITE ?  make_score(dct, dct / 2)
-                                      : -make_score(dct, dct / 2));
+              // The conditional for the eg value make sure that dynamic
+              // contempt do not make SF with contempt want to
+              // prefer simplification without compensation if the position gets bad enough.
+              contempt = (us == WHITE ?  make_score(dct, (ct > 0 && dct < -ct) ? dct + ct/2 : dct/2)
+                                      : -make_score(dct, (ct > 0 && dct < -ct) ? dct + ct/2 : dct/2));
           }
 
           // Start with a small aspiration window and, in the case of a fail
