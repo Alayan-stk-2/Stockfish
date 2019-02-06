@@ -579,16 +579,17 @@ namespace {
     // Find squares where our pawns can push on the next move
     b  = shift<Up>(pos.pieces(Us, PAWN)) & ~pos.pieces();
 
-    Bitboard goodPushSquares = ~pawn_attacks_bb<Them>(pos.pieces(Them,PAWN) & ~pos.blockers_for_king(Them)) & safe;
+    Bitboard potentialPushSquares = ~pawn_attacks_bb<Them>(pos.pieces(Them,PAWN) & ~pos.blockers_for_king(Them));
 
-    // Keep only the squares which are relatively safe
-    b &= goodPushSquares;
+    // Keep only the squares which are not attacked by their pawns
+    b &= potentialPushSquares;
 
     // Do this after excluding enemy pawn attacks
     // to encompass cases where en passant makes the threat moot
     b |= shift<Up>(b & TRank3BB) & ~pos.pieces();
 
-    b &= goodPushSquares;
+    // Keep only the squares which are relatively safe
+    b &= potentialPushSquares & safe;
 
     // Bonus for safe pawn threats on the next move
     b = pawn_attacks_bb<Us>(b) & pos.pieces(Them);
