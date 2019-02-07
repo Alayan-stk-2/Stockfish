@@ -165,7 +165,8 @@ namespace {
   constexpr Score RookOnPawn         = S( 10, 32);
   constexpr Score SliderOnQueen      = S( 59, 18);
   constexpr Score ThreatByKing       = S( 24, 89);
-  constexpr Score ThreatByPawnPush   = S( 48, 39);
+  constexpr Score ThreatByPawnPushWeak   = S( 25, 15);
+  constexpr Score ThreatByPawnPushStrong = S( 30, 25);
   constexpr Score ThreatByRank       = S( 13,  0);
   constexpr Score ThreatBySafePawn   = S(173, 94);
   constexpr Score TrappedRook        = S( 47,  4);
@@ -517,7 +518,7 @@ namespace {
     constexpr Direction Up       = (Us == WHITE ? NORTH   : SOUTH);
     constexpr Bitboard  TRank3BB = (Us == WHITE ? Rank3BB : Rank6BB);
 
-    Bitboard b, weak, defended, nonPawnEnemies, stronglyProtected, safe, restricted;
+    Bitboard b, b2, weak, defended, freePawns, nonPawnEnemies, stronglyProtected, safe, restricted;
     Score score = SCORE_ZERO;
 
     // Non-pawn enemies
@@ -535,7 +536,9 @@ namespace {
     weak = pos.pieces(Them) & ~stronglyProtected & attackedBy[Us][ALL_PIECES];
 
     // Safe or protected squares
-    safe = ~attackedBy[Them][ALL_PIECES] | attackedBy[Us][ALL_PIECES];
+    safe =   ~attackedBy[Them][ALL_PIECES]
+           | (~attackedBy2[Them] & attackedBy[Us][ALL_PIECES])
+           |  attackedBy2[Us];
 
     // Bonus according to the kind of attacking pieces
     if (defended | weak)
@@ -579,21 +582,30 @@ namespace {
     // Find squares where our pawns can push on the next move
     b  = shift<Up>(pos.pieces(Us, PAWN)) & ~pos.pieces();
 
-    Bitboard potentialPushSquares = ~pawn_attacks_bb<Them>(pos.pieces(Them,PAWN) & ~pos.blockers_for_king(Them));
+    freePawns = pos.pieces(Them,PAWN) & ~pos.blockers_for_king(Them);
+    Bitboard potentialPushSquares1 = ~pawn_attacks_bb<Them>(freePawns);
+    Bitboard potentialPushSquares2 = ~pawn_attacks_bb<Them>(freePawns & (~attackedBy[Us][ALL_PIECES] | stronglyProtected));
+
+    b2 = b;
 
     // Keep only the squares which are not attacked by their pawns
-    b &= potentialPushSquares;
+    b  &= potentialPushSquares1;
+    b2 &= potentialPushSquares2;
 
     // Do this after excluding enemy pawn attacks
     // to encompass cases where en passant makes the threat moot
-    b |= shift<Up>(b & TRank3BB) & ~pos.pieces();
+    b  |= shift<Up>(b  & TRank3BB) & ~pos.pieces();
+    b2 |= shift<Up>(b2 & TRank3BB) & ~pos.pieces();
 
     // Keep only the squares which are relatively safe
-    b &= potentialPushSquares & safe;
+    b  &= potentialPushSquares1 & safe;
+    b2 &= potentialPushSquares2 & safe;
 
     // Bonus for safe pawn threats on the next move
-    b = pawn_attacks_bb<Us>(b) & pos.pieces(Them);
-    score += ThreatByPawnPush * popcount(b);
+    b  = pawn_attacks_bb<Us>(b)  & pos.pieces(Them);
+    b2 = pawn_attacks_bb<Us>(b2) & pos.pieces(Them);
+    score += ThreatByPawnPushStrong   * popcount(b);
+    score += ThreatByPawnPushWeak     * popcount(b2);
 
     // Our safe or protected pawns
     b = pos.pieces(Us, PAWN) & safe;
