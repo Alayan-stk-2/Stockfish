@@ -165,13 +165,16 @@ namespace {
   constexpr Score RookOnPawn         = S( 10, 32);
   constexpr Score SliderOnQueen      = S( 59, 18);
   constexpr Score ThreatByKing       = S( 24, 89);
-  constexpr Score ThreatByPawnPushFuture = S( 25, 15);
-  constexpr Score ThreatByPawnPushNow    = S( 30, 25);
+   Score ThreatByPawnPushFuture = S( 25, 15);
+   Score ThreatByPawnPushNow    = S( 30, 25);
   constexpr Score ThreatByRank       = S( 13,  0);
-  constexpr Score ThreatBySafePawn   = S(173, 94);
+   Score ThreatBySafePawn   = S(173, 94);
   constexpr Score TrappedRook        = S( 47,  4);
   constexpr Score WeakQueen          = S( 49, 15);
   constexpr Score WeakUnopposedPawn  = S( 12, 23);
+
+TUNE(SetRange(0, 60), ThreatByPawnPushFuture, ThreatByPawnPushNow);
+TUNE(SetRange(0, 240), ThreatBySafePawn);
 
 #undef S
 
