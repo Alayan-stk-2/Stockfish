@@ -165,8 +165,8 @@ namespace {
   constexpr Score RookOnPawn         = S( 10, 32);
   constexpr Score SliderOnQueen      = S( 59, 18);
   constexpr Score ThreatByKing       = S( 24, 89);
-  constexpr Score ThreatByPawnPushWeak   = S( 25, 15);
-  constexpr Score ThreatByPawnPushStrong = S( 30, 25);
+  constexpr Score ThreatByPawnPushFuture = S( 25, 15);
+  constexpr Score ThreatByPawnPushNow    = S( 30, 25);
   constexpr Score ThreatByRank       = S( 13,  0);
   constexpr Score ThreatBySafePawn   = S(173, 94);
   constexpr Score TrappedRook        = S( 47,  4);
@@ -518,7 +518,7 @@ namespace {
     constexpr Direction Up       = (Us == WHITE ? NORTH   : SOUTH);
     constexpr Bitboard  TRank3BB = (Us == WHITE ? Rank3BB : Rank6BB);
 
-    Bitboard b, b2, weak, defended, freePawns, nonPawnEnemies, stronglyProtected, safe, restricted;
+    Bitboard b, bb, b3, weak, defended, freePawns, nonPawnEnemies, stronglyProtected, safe, restricted;
     Score score = SCORE_ZERO;
 
     // Non-pawn enemies
@@ -583,29 +583,31 @@ namespace {
     b  = shift<Up>(pos.pieces(Us, PAWN)) & ~pos.pieces();
 
     freePawns = pos.pieces(Them,PAWN) & ~pos.blockers_for_king(Them);
-    Bitboard potentialPushSquares1 = ~pawn_attacks_bb<Them>(freePawns);
-    Bitboard potentialPushSquares2 = ~pawn_attacks_bb<Them>(freePawns & (~attackedBy[Us][ALL_PIECES] | stronglyProtected));
+    Bitboard immediatePushSquares = ~pawn_attacks_bb<Them>(freePawns);
+    Bitboard futurePushSquares    = ~pawn_attacks_bb<Them>(freePawns & (~attackedBy[Us][ALL_PIECES] | stronglyProtected));
 
-    b2 = b;
+    bb = b;
+    b3 = b & TRank3BB;
 
-    // Keep only the squares which are not attacked by their pawns
-    b  &= potentialPushSquares1;
-    b2 &= potentialPushSquares2;
-
-    // Do this after excluding enemy pawn attacks
-    // to encompass cases where en passant makes the threat moot
-    b  |= shift<Up>(b  & TRank3BB) & ~pos.pieces();
-    b2 |= shift<Up>(b2 & TRank3BB) & ~pos.pieces();
+    if (b3)
+    {
+        // Keep only the squares which are not attacked by their pawns
+        // to encompass cases where en passant makes the threat moot
+        b  |= shift<Up>(b3 & immediatePushSquares) & ~pos.pieces();
+        bb |= shift<Up>(b3 & futurePushSquares)    & ~pos.pieces();
+    }
 
     // Keep only the squares which are relatively safe
-    b  &= potentialPushSquares1 & safe;
-    b2 &= potentialPushSquares2 & safe;
+    b  &= immediatePushSquares & safe;
+    bb &= futurePushSquares    & safe;
+
+    Bitboard nonPawnPieces = pos.pieces(Them) & ~pos.pieces(Them, PAWN);
 
     // Bonus for safe pawn threats on the next move
-    b  = pawn_attacks_bb<Us>(b)  & pos.pieces(Them);
-    b2 = pawn_attacks_bb<Us>(b2) & pos.pieces(Them);
-    score += ThreatByPawnPushStrong   * popcount(b);
-    score += ThreatByPawnPushWeak     * popcount(b2);
+    b  = pawn_attacks_bb<Us>(b)  & nonPawnPieces;
+    bb = pawn_attacks_bb<Us>(bb) & nonPawnPieces;
+    score += ThreatByPawnPushNow    * popcount(b);
+    score += ThreatByPawnPushFuture * popcount(bb);
 
     // Our safe or protected pawns
     b = pos.pieces(Us, PAWN) & safe;
