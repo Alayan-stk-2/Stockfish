@@ -159,15 +159,16 @@ namespace {
   constexpr Score ThreatByKing       = S( 24, 89);
   constexpr Score ThreatByPawnPush   = S( 48, 39);
   constexpr Score ThreatByRank       = S( 13,  0);
- Score ThreatBySafePawnQ   = S(223, 119);
+ Score ThreatBySafePawnQ   = S(323, 169);
  Score ThreatBySafePawnR   = S(173,  94);
- Score ThreatBySafePawnM   = S(143,  79);
+ Score ThreatBySafePawnB   = S( 98,  44);
+ Score ThreatBySafePawnN   = S( 98,  44);
   constexpr Score TrappedRook        = S( 47,  4);
   constexpr Score WeakQueen          = S( 49, 15);
   constexpr Score WeakUnopposedPawn  = S( 12, 23);
   constexpr Score Outpost            = S(  9,  3);
 
-TUNE(SetRange(0, 300), ThreatBySafePawnQ, ThreatBySafePawnR, ThreatBySafePawnM);
+TUNE(SetRange(0, 400), ThreatBySafePawnQ, ThreatBySafePawnR, ThreatBySafePawnB, ThreatBySafePawnN);
 
 #undef S
 
@@ -597,8 +598,10 @@ TUNE(SetRange(0, 300), ThreatBySafePawnQ, ThreatBySafePawnR, ThreatBySafePawnM);
             	score += ThreatBySafePawnQ;
             else if (pos.pieces(Them, ROOK) & s)
                 score += ThreatBySafePawnR;
-            else if (pos.pieces(Them, BISHOP, KNIGHT) & s)
-                score += ThreatBySafePawnM;
+            else if (pos.pieces(Them, BISHOP) & s)
+                score += ThreatBySafePawnB;
+            else if (pos.pieces(Them, KNIGHT) & s)
+                score += ThreatBySafePawnN;
         };
 
     // Bonus for threats on the next moves against enemy queen
