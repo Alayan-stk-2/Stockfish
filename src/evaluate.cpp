@@ -121,15 +121,27 @@ namespace {
   // no (friendly) pawn on the rook file.
   constexpr Score RookOnFile[] = { S(18, 7), S(44, 20) };
 
-  // ThreatByMinor/ByRook[attacked PieceType] contains bonuses according to
-  // which piece type attacks which one. Attacks on lesser pieces which are
-  // pawn-defended are not considered.
-  constexpr Score ThreatByMinor[PIECE_TYPE_NB] = {
-    S(0, 0), S(0, 31), S(39, 42), S(57, 44), S(68, 112), S(62, 120)
+  // ThreatByMinor/ByRook[attacked PieceType][defense type] contains bonuses
+  // according to which piece type attacks which one.
+  // The defense type is 0 for "defended", 1 for "weak" and 2 for "vulnerable"
+  // See "threats" for a detailed meaning.
+  // TODO : have an enum
+  constexpr Score ThreatByMinor[PIECE_TYPE_NB][3] = {
+    { S( 0,  0), S( 0,  0), S( 0,  0) },
+    { S( 0, 31), S( 0, 31), S( 0, 31) }, // Pawns
+    { S(39, 42), S(39, 42), S(39, 42) }, // Knights
+    { S(57, 44), S(57, 44), S(57, 44) }, // Bishops
+    { S(68,112), S(68,112), S(68,112) }, // Rooks
+    { S(62,120), S(62,120), S(62,120) }  // Queens
   };
 
-  constexpr Score ThreatByRook[PIECE_TYPE_NB] = {
-    S(0, 0), S(0, 24), S(38, 71), S(38, 61), S(0, 38), S(51, 38)
+  constexpr Score ThreatByRook[PIECE_TYPE_NB][3] = {
+    { S( 0,  0), S( 0,  0), S( 0,  0) },
+    { S( 0, 24), S( 0, 24), S( 0, 24) }, // Pawns
+    { S(38, 71), S(38, 71), S(38, 71) }, // Knights
+    { S(38, 61), S(38, 61), S(38, 61) }, // Bishops
+    { S( 0, 38), S( 0, 38), S( 0, 38) }, // Rooks
+    { S(51, 38), S(51, 38), S(51, 38) }  // Queens
   };
 
   // PassedRank[Rank] contains a bonus according to the rank of a passed pawn
@@ -202,6 +214,11 @@ namespace {
     // possibly via x-ray or by one pawn and one piece. Diagonal x-ray through
     // pawn or squares attacked by 2 pawns are not explicitly added.
     Bitboard attackedBy2[COLOR_NB];
+
+    // attackedBy3[color] are the squares attacked by 3 pieces of a given color,
+    // possibly via x-ray, by one pawn and two pieces. Diagonal x-ray through
+    // pawn or squares attacked by 2 pawns are not explicitly added.
+    Bitboard attackedBy3[COLOR_NB];
 
     // kingRing[color] are the squares adjacent to the king, plus (only for a
     // king on its first rank) the squares two ranks in front. For instance,
@@ -282,33 +299,42 @@ namespace {
                                                    : Rank5BB | Rank4BB | Rank3BB);
     const Square* pl = pos.squares<Pt>(Us);
 
-    Bitboard b, bb;
+    Bitboard b, bb, bnx;
     Score score = SCORE_ZERO;
 
     attackedBy[Us][Pt] = 0;
+    attackedBy3[Us] = 0;
 
     for (Square s = *pl; s != SQ_NONE; s = *++pl)
     {
-        // Find attacked squares, including x-ray attacks for bishops and rooks
+        // Find attacked squares, including x-ray attacks for bishops, queens and rooks
         b = Pt == BISHOP ? attacks_bb<BISHOP>(s, pos.pieces() ^ pos.pieces(QUEEN))
           : Pt ==   ROOK ? attacks_bb<  ROOK>(s, pos.pieces() ^ pos.pieces(QUEEN) ^ pos.pieces(Us, ROOK))
+          : Pt ==  QUEEN ?   attacks_bb<BISHOP>(s, pos.pieces() ^ pos.pieces(Us, BISHOP))
+                           | attacks_bb<  ROOK>(s, pos.pieces() ^ pos.pieces(Us, ROOK))
                          : pos.attacks_from<Pt>(s);
 
-        if (pos.blockers_for_king(Us) & s)
-            b &= LineBB[pos.square<KING>(Us)][s];
+        bnx = Pt == QUEEN ? pos.attacks_from<Pt>(s) : b;
 
+        if (pos.blockers_for_king(Us) & s)
+        {
+            b   &= LineBB[pos.square<KING>(Us)][s];
+            bnx &= LineBB[pos.square<KING>(Us)][s];
+        }
+
+        attackedBy3[Us] |= attackedBy2[Us] & b;
         attackedBy2[Us] |= attackedBy[Us][ALL_PIECES] & b;
         attackedBy[Us][Pt] |= b;
         attackedBy[Us][ALL_PIECES] |= b;
 
-        if (b & kingRing[Them])
+        if (bnx & kingRing[Them])
         {
             kingAttackersCount[Us]++;
             kingAttackersWeight[Us] += KingAttackWeights[Pt];
             kingAttacksCount[Us] += popcount(b & attackedBy[Them][KING]);
         }
 
-        int mob = popcount(b & mobilityArea[Us]);
+        int mob = popcount(bnx & mobilityArea[Us]);
 
         mobility[Us] += MobilityBonus[Pt - 2][mob];
 
@@ -511,7 +537,7 @@ namespace {
     constexpr Direction Up       = (Us == WHITE ? NORTH   : SOUTH);
     constexpr Bitboard  TRank3BB = (Us == WHITE ? Rank3BB : Rank6BB);
 
-    Bitboard b, weak, defended, nonPawnEnemies, stronglyProtected, safe, restricted;
+    Bitboard b, bb, weak, vulnerable, defended, nonPawnEnemies, stronglyProtected, safe, restricted;
     Score score = SCORE_ZERO;
 
     // Non-pawn enemies
@@ -519,11 +545,15 @@ namespace {
 
     // Squares strongly protected by the enemy, either because they defend the
     // square with a pawn, or because they defend the square twice and we don't.
-    stronglyProtected =  attackedBy[Them][PAWN]
-                       | (attackedBy2[Them] & ~attackedBy2[Us]);
+    stronglyProtected =  (( attackedBy[Them][PAWN] | attackedBy2[Them])                      & ~attackedBy2[Us])
+                       | (((attackedBy[Them][PAWN] & attackedBy2[Them]) | attackedBy3[Them]) & ~attackedBy3[Us])
+                       | pawn_double_attacks_bb<Them>(pos.pieces(Them, PAWN));
 
     // Non-pawn enemies, strongly protected
-    defended = nonPawnEnemies & stronglyProtected;
+    defended = nonPawnEnemies & stronglyProtected & ~attackedBy2[Us];
+
+    // The enemy defence are strong but are more likely to be breached later
+    vulnerable = pos.pieces(Them) & stronglyProtected & attackedBy2[Us];
 
     // Enemies not strongly protected and under our attack
     weak = pos.pieces(Them) & ~stronglyProtected & attackedBy[Us][ALL_PIECES];
@@ -532,22 +562,56 @@ namespace {
     safe = ~attackedBy[Them][ALL_PIECES] | attackedBy[Us][ALL_PIECES];
 
     // Bonus according to the kind of attacking pieces
-    if (defended | weak)
+    if (defended | weak | vulnerable)
     {
-        b = (defended | weak) & (attackedBy[Us][KNIGHT] | attackedBy[Us][BISHOP]);
+        bb = (attackedBy[Us][KNIGHT] | attackedBy[Us][BISHOP]);
+        b = defended & bb;
         while (b)
         {
             Square s = pop_lsb(&b);
-            score += ThreatByMinor[type_of(pos.piece_on(s))];
+            score += ThreatByMinor[type_of(pos.piece_on(s))][0];
+        }
+        b = weak & bb;
+        while (b)
+        {
+            Square s = pop_lsb(&b);
+            score += ThreatByMinor[type_of(pos.piece_on(s))][1];
+        }
+        b = vulnerable & bb;
+        while (b)
+        {
+            Square s = pop_lsb(&b);
+            score += ThreatByMinor[type_of(pos.piece_on(s))][2];
+        }
+        while (bb)
+        {
+            Square s = pop_lsb(&bb);
             if (type_of(pos.piece_on(s)) != PAWN)
                 score += ThreatByRank * (int)relative_rank(Them, s);
         }
 
-        b = weak & attackedBy[Us][ROOK];
+        bb = attackedBy[Us][ROOK];
+        b = defended & bb;
         while (b)
         {
             Square s = pop_lsb(&b);
-            score += ThreatByRook[type_of(pos.piece_on(s))];
+            score += ThreatByRook[type_of(pos.piece_on(s))][0];
+        }
+        b = weak & bb;
+        while (b)
+        {
+            Square s = pop_lsb(&b);
+            score += ThreatByRook[type_of(pos.piece_on(s))][1];
+        }
+        b = vulnerable & bb;
+        while (b)
+        {
+            Square s = pop_lsb(&b);
+            score += ThreatByRook[type_of(pos.piece_on(s))][2];
+        }
+        while (bb)
+        {
+            Square s = pop_lsb(&bb);
             if (type_of(pos.piece_on(s)) != PAWN)
                 score += ThreatByRank * (int)relative_rank(Them, s);
         }
