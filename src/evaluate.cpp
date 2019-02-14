@@ -92,10 +92,10 @@ namespace {
   constexpr int KingAttackWeights[PIECE_TYPE_NB] = { 0, 0, 77, 55, 44, 10 };
 
   // Penalties for enemy's safe checks
-  constexpr int QueenSafeCheck  = 780;
-  constexpr int RookSafeCheck   = 1080;
-  constexpr int BishopSafeCheck = 635;
-  constexpr int KnightSafeCheck = 790;
+  constexpr int QueenSafeCheck  = 750;
+  constexpr int RookSafeCheck   = 1145;
+  constexpr int BishopSafeCheck = 597;
+  constexpr int KnightSafeCheck = 812;
 
 #define S(mg, eg) make_score(mg, eg)
 
@@ -126,7 +126,7 @@ namespace {
   // The defense type is 0 for "defended", 1 for "weak" and 2 for "vulnerable"
   // See "threats" for a detailed meaning.
   // TODO : have an enum
-  constexpr Score ThreatByMinor[PIECE_TYPE_NB][3] = {
+    Score ThreatByMinor[PIECE_TYPE_NB][3] = {
     { S( 0,  0), S( 0,  0), S( 0,  0) },
     { S( 0, 31), S( 0, 31), S( 0, 31) }, // Pawns
     { S(39, 42), S(39, 42), S(39, 42) }, // Knights
@@ -135,7 +135,7 @@ namespace {
     { S(62,120), S(62,120), S(62,120) }  // Queens
   };
 
-  constexpr Score ThreatByRook[PIECE_TYPE_NB][3] = {
+    Score ThreatByRook[PIECE_TYPE_NB][3] = {
     { S( 0,  0), S( 0,  0), S( 0,  0) },
     { S( 0, 24), S( 0, 24), S( 0, 24) }, // Pawns
     { S(38, 71), S(38, 71), S(38, 71) }, // Knights
@@ -143,6 +143,8 @@ namespace {
     { S( 0, 38), S( 0, 38), S( 0, 38) }, // Rooks
     { S(51, 38), S(51, 38), S(51, 38) }  // Queens
   };
+
+TUNE(SetRange(0, 200), ThreatByMinor, ThreatByRook);
 
   // PassedRank[Rank] contains a bonus according to the rank of a passed pawn
   constexpr Score PassedRank[RANK_NB] = {
@@ -500,15 +502,15 @@ namespace {
     int kingFlankAttacks = popcount(b1) + popcount(b2);
 
     kingDanger +=        kingAttackersCount[Them] * kingAttackersWeight[Them]
-                 +  69 * kingAttacksCount[Them]
-                 + 185 * popcount(kingRing[Us] & weak)
-                 - 100 * bool(attackedBy[Us][KNIGHT] & attackedBy[Us][KING])
-                 + 150 * popcount(pos.blockers_for_king(Us) | unsafeChecks)
-                 - 873 * !pos.count<QUEEN>(Them)
+                 +  74 * kingAttacksCount[Them]
+                 + 181 * popcount(kingRing[Us] & weak)
+                 -  96 * bool(attackedBy[Us][KNIGHT] & attackedBy[Us][KING])
+                 + 147 * popcount(pos.blockers_for_king(Us) | unsafeChecks)
+                 - 874 * !pos.count<QUEEN>(Them)
                  -   6 * mg_value(score) / 8
                  +       mg_value(mobility[Them] - mobility[Us])
                  +   5 * kingFlankAttacks * kingFlankAttacks / 16
-                 -   25;
+                 -  22;
 
     // Transform the kingDanger units into a Score, and subtract it from the evaluation
     if (kingDanger > 0)
