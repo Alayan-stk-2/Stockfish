@@ -121,7 +121,7 @@ namespace {
   // no (friendly) pawn on the rook file.
   constexpr Score RookOnFile[] = { S(18, 7), S(44, 20) };
 
-  // threatByKnight/ByBishop/ByRook[attacked PieceType][defense type] contains bonuses
+  // ThreatByKnight/ByBishop/ByRook[attacked PieceType][defense type] contains bonuses
   // according to which piece type attacks which one.
   // The defense type is 0 for "defended", 1 for "weak" and 2 for "vulnerable"
   // See "threats" for a detailed meaning.
@@ -580,19 +580,19 @@ TUNE(SetRange(-20, 160), ThreatByKnight, ThreatByBishop, ThreatByRook);
         while (b)
         {
             Square s = pop_lsb(&b);
-            score += threatByKnight[type_of(pos.piece_on(s))][0];
+            score += ThreatByKnight[type_of(pos.piece_on(s))][0];
         }
         b = weak & bb;
         while (b)
         {
             Square s = pop_lsb(&b);
-            score += threatByKnight[type_of(pos.piece_on(s))][1];
+            score += ThreatByKnight[type_of(pos.piece_on(s))][1];
         }
         b = vulnerable & bb;
         while (b)
         {
             Square s = pop_lsb(&b);
-            score += threatByKnight[type_of(pos.piece_on(s))][2];
+            score += ThreatByKnight[type_of(pos.piece_on(s))][2];
         }
 
         bb = attackedBy[Us][BISHOP];
@@ -600,19 +600,19 @@ TUNE(SetRange(-20, 160), ThreatByKnight, ThreatByBishop, ThreatByRook);
         while (b)
         {
             Square s = pop_lsb(&b);
-            score += threatByBishop[type_of(pos.piece_on(s))][0];
+            score += ThreatByBishop[type_of(pos.piece_on(s))][0];
         }
         b = weak & bb;
         while (b)
         {
             Square s = pop_lsb(&b);
-            score += threatByBishop[type_of(pos.piece_on(s))][1];
+            score += ThreatByBishop[type_of(pos.piece_on(s))][1];
         }
         b = vulnerable & bb;
         while (b)
         {
             Square s = pop_lsb(&b);
-            score += threatByBishop[type_of(pos.piece_on(s))][2];
+            score += ThreatByBishop[type_of(pos.piece_on(s))][2];
         }
 
         // Only a single threat by rank even if attacked by 2 minors
