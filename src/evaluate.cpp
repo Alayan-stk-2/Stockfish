@@ -121,30 +121,39 @@ namespace {
   // no (friendly) pawn on the rook file.
   constexpr Score RookOnFile[] = { S(18, 7), S(44, 20) };
 
-  // ThreatByMinor/ByRook[attacked PieceType][defense type] contains bonuses
+  // threatByKnight/ByBishop/ByRook[attacked PieceType][defense type] contains bonuses
   // according to which piece type attacks which one.
   // The defense type is 0 for "defended", 1 for "weak" and 2 for "vulnerable"
   // See "threats" for a detailed meaning.
   // TODO : have an enum
-    Score ThreatByMinor[PIECE_TYPE_NB][3] = {
+    Score ThreatByKnight[PIECE_TYPE_NB][3] = {
     { S( 0,  0), S( 0,  0), S( 0,  0) },
-    { S( 0, 31), S( 0, 31), S( 0, 31) }, // Pawns
-    { S(39, 42), S(39, 42), S(39, 42) }, // Knights
-    { S(57, 44), S(57, 44), S(57, 44) }, // Bishops
-    { S(68,112), S(68,112), S(68,112) }, // Rooks
-    { S(62,120), S(62,120), S(62,120) }  // Queens
+    { S( 8, 36), S(13, 18), S( 2, 28) }, // Pawns
+    { S(34, 27), S(43, 17), S(32, 32) }, // Knights
+    { S(62, 34), S(69, 41), S(59, 45) }, // Bishops
+    { S(79,108), S(73,114), S(65,118) }, // Rooks
+    { S(62,114), S(73,130), S(76,128) }  // Queens
+  };
+
+    Score ThreatByBishop[PIECE_TYPE_NB][3] = {
+    { S( 0,  0), S( 0,  0), S( 0,  0) },
+    { S( 8, 36), S(13, 18), S( 2, 28) }, // Pawns
+    { S(34, 27), S(43, 17), S(32, 32) }, // Knights
+    { S(62, 34), S(69, 41), S(59, 45) }, // Bishops
+    { S(79,108), S(73,114), S(65,118) }, // Rooks
+    { S(62,114), S(73,130), S(76,128) }  // Queens
   };
 
     Score ThreatByRook[PIECE_TYPE_NB][3] = {
     { S( 0,  0), S( 0,  0), S( 0,  0) },
-    { S( 0, 24), S( 0, 24), S( 0, 24) }, // Pawns
-    { S(38, 71), S(38, 71), S(38, 71) }, // Knights
-    { S(38, 61), S(38, 61), S(38, 61) }, // Bishops
-    { S( 0, 38), S( 0, 38), S( 0, 38) }, // Rooks
-    { S(51, 38), S(51, 38), S(51, 38) }  // Queens
+    { S( 4, 26), S( 1,  3), S( 7, 17) }, // Pawns
+    { S(42, 72), S(42, 84), S(39, 79) }, // Knights
+    { S(25, 66), S(38, 53), S(26, 73) }, // Bishops
+    { S(10, 38), S( 2, 26), S(25, 38) }, // Rooks
+    { S(40, 46), S(46, 34), S(61, 36) }  // Queens
   };
 
-TUNE(SetRange(0, 200), ThreatByMinor, ThreatByRook);
+TUNE(SetRange(-20, 160), ThreatByKnight, ThreatByBishop, ThreatByRook);
 
   // PassedRank[Rank] contains a bonus according to the rank of a passed pawn
   constexpr Score PassedRank[RANK_NB] = {
@@ -326,8 +335,8 @@ TUNE(SetRange(0, 200), ThreatByMinor, ThreatByRook);
 
         attackedBy3[Us] |= attackedBy2[Us] & b;
         attackedBy2[Us] |= attackedBy[Us][ALL_PIECES] & b;
-        attackedBy[Us][Pt] |= b;
-        attackedBy[Us][ALL_PIECES] |= b;
+        attackedBy[Us][Pt] |= bnx;
+        attackedBy[Us][ALL_PIECES] |= bnx;
 
         if (bnx & kingRing[Them])
         {
@@ -566,25 +575,48 @@ TUNE(SetRange(0, 200), ThreatByMinor, ThreatByRook);
     // Bonus according to the kind of attacking pieces
     if (defended | weak | vulnerable)
     {
-        bb = (attackedBy[Us][KNIGHT] | attackedBy[Us][BISHOP]);
+        bb = attackedBy[Us][KNIGHT];
         b = defended & bb;
         while (b)
         {
             Square s = pop_lsb(&b);
-            score += ThreatByMinor[type_of(pos.piece_on(s))][0];
+            score += threatByKnight[type_of(pos.piece_on(s))][0];
         }
         b = weak & bb;
         while (b)
         {
             Square s = pop_lsb(&b);
-            score += ThreatByMinor[type_of(pos.piece_on(s))][1];
+            score += threatByKnight[type_of(pos.piece_on(s))][1];
         }
         b = vulnerable & bb;
         while (b)
         {
             Square s = pop_lsb(&b);
-            score += ThreatByMinor[type_of(pos.piece_on(s))][2];
+            score += threatByKnight[type_of(pos.piece_on(s))][2];
         }
+
+        bb = attackedBy[Us][BISHOP];
+        b = defended & bb;
+        while (b)
+        {
+            Square s = pop_lsb(&b);
+            score += threatByBishop[type_of(pos.piece_on(s))][0];
+        }
+        b = weak & bb;
+        while (b)
+        {
+            Square s = pop_lsb(&b);
+            score += threatByBishop[type_of(pos.piece_on(s))][1];
+        }
+        b = vulnerable & bb;
+        while (b)
+        {
+            Square s = pop_lsb(&b);
+            score += threatByBishop[type_of(pos.piece_on(s))][2];
+        }
+
+        // Only a single threat by rank even if attacked by 2 minors
+        bb |= attackedBy[Us][KNIGHT];
         while (bb)
         {
             Square s = pop_lsb(&bb);
