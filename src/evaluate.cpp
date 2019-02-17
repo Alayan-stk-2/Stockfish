@@ -329,7 +329,7 @@ TUNE(SetRange(-20, 200), ThreatByKnight, ThreatByBishop, ThreatByRook);
                            | attacks_bb<  ROOK>(s, pos.pieces() ^ pos.pieces(Us, ROOK))
                          : pos.attacks_from<Pt>(s);
 
-        bnx = Pt == QUEEN ? pos.attacks_from<Pt>(s) : b;
+        bnx = (Pt == QUEEN) ? pos.attacks_from<Pt>(s) : b;
 
         if (pos.blockers_for_king(Us) & s)
         {
@@ -340,7 +340,7 @@ TUNE(SetRange(-20, 200), ThreatByKnight, ThreatByBishop, ThreatByRook);
         attackedBy3[Us] |= attackedBy2[Us] & b;
         attackedBy2[Us] |= attackedBy[Us][ALL_PIECES] & b;
         attackedBy[Us][Pt] |= bnx;
-        attackedBy[Us][ALL_PIECES] |= bnx;
+        attackedBy[Us][ALL_PIECES] |= b;
 
         if (bnx & kingRing[Them])
         {
