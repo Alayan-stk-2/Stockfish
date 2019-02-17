@@ -284,6 +284,7 @@ TUNE(SetRange(-20, 200), ThreatByKnight, ThreatByBishop, ThreatByRook);
     attackedBy[Us][PAWN] = pe->pawn_attacks(Us);
     attackedBy[Us][ALL_PIECES] = attackedBy[Us][KING] | attackedBy[Us][PAWN];
     attackedBy2[Us]            = attackedBy[Us][KING] & attackedBy[Us][PAWN];
+    attackedBy3[Us] = 0;
 
     // Init our king safety tables
     kingRing[Us] = attackedBy[Us][KING];
@@ -318,7 +319,6 @@ TUNE(SetRange(-20, 200), ThreatByKnight, ThreatByBishop, ThreatByRook);
     Score score = SCORE_ZERO;
 
     attackedBy[Us][Pt] = 0;
-    attackedBy3[Us] = 0;
 
     for (Square s = *pl; s != SQ_NONE; s = *++pl)
     {
