@@ -38,6 +38,9 @@ namespace Trace {
     MATERIAL = 8, IMBALANCE, MOBILITY, THREAT, PASSED, SPACE, INITIATIVE, TOTAL, TERM_NB
   };
 
+  enum ThreatKind { DEFENDED_1ATT, DEFENDED_2ATT, DEFENDED_3ATT, WEAK_1ATT, WEAK_2ATT, WEAK_3ATT, THREAT_KIND_COUNT
+  };
+
   Score scores[TERM_NB][COLOR_NB];
 
   double to_cp(Value v) { return double(v) / PawnValueEg; }
@@ -92,10 +95,10 @@ namespace {
   constexpr int KingAttackWeights[PIECE_TYPE_NB] = { 0, 0, 77, 55, 44, 10 };
 
   // Penalties for enemy's safe checks
-  constexpr int QueenSafeCheck  = 780;
-  constexpr int RookSafeCheck   = 1080;
-  constexpr int BishopSafeCheck = 635;
-  constexpr int KnightSafeCheck = 790;
+  constexpr int QueenSafeCheck  = 750;
+  constexpr int RookSafeCheck   = 1145;
+  constexpr int BishopSafeCheck = 597;
+  constexpr int KnightSafeCheck = 812;
 
 #define S(mg, eg) make_score(mg, eg)
 
@@ -121,27 +124,36 @@ namespace {
   // no (friendly) pawn on the rook file.
   constexpr Score RookOnFile[] = { S(18, 7), S(44, 20) };
 
-  // ThreatByMinor/ByRook[attacked PieceType][defense type] contains bonuses
+  // ThreatByKnight/ByBishop/ByRook[attacked PieceType][Threat kind] contains bonuses
   // according to which piece type attacks which one.
-  // The defense type is 0 for "defended", 1 for "weak" and 2 for "vulnerable"
+  // The defense type uses the ThreatKind enum, defended with 1, 2 or 3+ attackers
+  // and weak with 1, 2 or 3+ attackers.
   // See "threats" for a detailed meaning.
-  // TODO : have an enum
-  constexpr Score ThreatByMinor[PIECE_TYPE_NB][3] = {
-    { S( 0,  0), S( 0,  0), S( 0,  0) },
-    { S( 0, 31), S( 0, 31), S( 0, 31) }, // Pawns
-    { S(39, 42), S(39, 42), S(39, 42) }, // Knights
-    { S(57, 44), S(57, 44), S(57, 44) }, // Bishops
-    { S(68,112), S(68,112), S(68,112) }, // Rooks
-    { S(62,120), S(62,120), S(62,120) }  // Queens
+  constexpr Score ThreatByKnight[PIECE_TYPE_NB][THREAT_KIND_COUNT] = {
+    { S( 0,  0), S(  0,  0), S( 0,  0), S( 0,  0), S( 0,  0), S(  0,  0) },
+    { S(-7, 30), S(-15, 27), S(-3, 21), S(10, 17), S( 6,  7), S(  1, -3) }, // Pawns
+    { S(45, 25), S(  8, 26), S( 9, 42), S(46, 17), S(44, 16), S( 56, 18) }, // Knights
+    { S(57, 14), S( 45, 57), S(58, 43), S(67, 52), S(75, 31), S( 57, 48) }, // Bishops
+    { S(83, 88), S( 71,130), S(47,120), S(70,106), S(89,105), S( 60,115) }, // Rooks
+    { S(63,138), S( 67,124), S(71,133), S(78,126), S(55,139), S(102,108) }  // Queens
   };
 
-  constexpr Score ThreatByRook[PIECE_TYPE_NB][3] = {
-    { S( 0,  0), S( 0,  0), S( 0,  0) },
-    { S( 0, 24), S( 0, 24), S( 0, 24) }, // Pawns
-    { S(38, 71), S(38, 71), S(38, 71) }, // Knights
-    { S(38, 61), S(38, 61), S(38, 61) }, // Bishops
-    { S( 0, 38), S( 0, 38), S( 0, 38) }, // Rooks
-    { S(51, 38), S(51, 38), S(51, 38) }  // Queens
+  constexpr Score ThreatByBishop[PIECE_TYPE_NB][THREAT_KIND_COUNT] = {
+    { S(  0,  0), S(  0,  0), S( 0,  0), S( 0,  0), S(  0,  0), S( 0,  0) },
+    { S(-12, 15), S(-18, 26), S(-9, 23), S( 1, 29), S(-12, 29), S( 8, 16) }, // Pawns
+    { S( 27, 23), S( 28, 30), S(14, 43), S(39, 15), S( 43, 23), S(26,  8) }, // Knights
+    { S( 69, 18), S( 44, 40), S(61, 39), S(69, 53), S( 69, 49), S(74, 32) }, // Bishops
+    { S( 82,114), S( 83,117), S(82,122), S(76,116), S( 65,115), S(74,107) }, // Rooks
+    { S( 79,103), S( 86,121), S(68,117), S(74,150), S( 72,131), S(67,108) }  // Queens
+  };
+
+  constexpr Score ThreatByRook[PIECE_TYPE_NB][THREAT_KIND_COUNT] = {
+    { S(  0,  0), S( 0,  0), S( 0,  0), S( 0,  0), S( 0,  0), S( 0,  0) },
+    { S(-16, -9), S( 2, 19), S(22, 14), S(-4,  2), S( 7, 10), S( 4, -6) }, // Pawns
+    { S( 23, 68), S(38, 77), S(18, 86), S(25, 77), S(39, 80), S(35, 70) }, // Knights
+    { S( 12, 48), S(18, 72), S(27, 82), S(30, 54), S(38, 69), S(38, 64) }, // Bishops
+    { S( -2, 52), S(31, 35), S(27, 41), S(17, 39), S(-8, 18), S( 8, 30) }, // Rooks
+    { S( 45, 62), S(44, 33), S(49, 36), S(47, 39), S(47, 52), S(42, 57) }  // Queens
   };
 
   // PassedRank[Rank] contains a bonus according to the rank of a passed pawn
@@ -193,6 +205,7 @@ namespace {
     template<Color Us> void initialize();
     template<Color Us, PieceType Pt> Score pieces();
     template<Color Us> Score king() const;
+    template<Color Us> Score applyThreatByPiece(Bitboard attacked_squares, ThreatKind kind) const;
     template<Color Us> Score threats() const;
     template<Color Us> Score passed() const;
     template<Color Us> Score space() const;
@@ -269,6 +282,7 @@ namespace {
     attackedBy[Us][PAWN] = pe->pawn_attacks(Us);
     attackedBy[Us][ALL_PIECES] = attackedBy[Us][KING] | attackedBy[Us][PAWN];
     attackedBy2[Us]            = attackedBy[Us][KING] & attackedBy[Us][PAWN];
+    attackedBy3[Us] = 0;
 
     // Init our king safety tables
     kingRing[Us] = attackedBy[Us][KING];
@@ -303,7 +317,6 @@ namespace {
     Score score = SCORE_ZERO;
 
     attackedBy[Us][Pt] = 0;
-    attackedBy3[Us] = 0;
 
     for (Square s = *pl; s != SQ_NONE; s = *++pl)
     {
@@ -314,7 +327,7 @@ namespace {
                            | attacks_bb<  ROOK>(s, pos.pieces() ^ pos.pieces(Us, ROOK))
                          : pos.attacks_from<Pt>(s);
 
-        bnx = Pt == QUEEN ? pos.attacks_from<Pt>(s) : b;
+        bnx = (Pt == QUEEN) ? pos.attacks_from<Pt>(s) : b;
 
         if (pos.blockers_for_king(Us) & s)
         {
@@ -324,7 +337,7 @@ namespace {
 
         attackedBy3[Us] |= attackedBy2[Us] & b;
         attackedBy2[Us] |= attackedBy[Us][ALL_PIECES] & b;
-        attackedBy[Us][Pt] |= b;
+        attackedBy[Us][Pt] |= bnx;
         attackedBy[Us][ALL_PIECES] |= b;
 
         if (bnx & kingRing[Them])
@@ -500,15 +513,15 @@ namespace {
     int kingFlankAttacks = popcount(b1) + popcount(b2);
 
     kingDanger +=        kingAttackersCount[Them] * kingAttackersWeight[Them]
-                 +  69 * kingAttacksCount[Them]
-                 + 185 * popcount(kingRing[Us] & weak)
-                 - 100 * bool(attackedBy[Us][KNIGHT] & attackedBy[Us][KING])
-                 + 150 * popcount(pos.blockers_for_king(Us) | unsafeChecks)
-                 - 873 * !pos.count<QUEEN>(Them)
+                 +  74 * kingAttacksCount[Them]
+                 + 181 * popcount(kingRing[Us] & weak)
+                 -  96 * bool(attackedBy[Us][KNIGHT] & attackedBy[Us][KING])
+                 + 147 * popcount(pos.blockers_for_king(Us) | unsafeChecks)
+                 - 874 * !pos.count<QUEEN>(Them)
                  -   6 * mg_value(score) / 8
                  +       mg_value(mobility[Them] - mobility[Us])
                  +   5 * kingFlankAttacks * kingFlankAttacks / 16
-                 -   25;
+                 -  22;
 
     // Transform the kingDanger units into a Score, and subtract it from the evaluation
     if (kingDanger > 0)
@@ -527,6 +540,25 @@ namespace {
     return score;
   }
 
+  // This is an helper function to reduce code duplication in threats
+  template<Tracing T> template<Color Us>
+  Score Evaluation<T>::applyThreatByPiece(Bitboard attacked_squares, ThreatKind kind) const {
+
+    Score score = SCORE_ZERO;
+
+    while (attacked_squares)
+    {
+        Square s = pop_lsb(&attacked_squares);
+        if (attackedBy[Us][KNIGHT] & s)
+            score += ThreatByKnight[type_of(pos.piece_on(s))][kind];
+        if (attackedBy[Us][BISHOP] & s)
+            score += ThreatByBishop[type_of(pos.piece_on(s))][kind];
+        if (attackedBy[Us][ ROOK ] & s)
+            score += ThreatByRook[type_of(pos.piece_on(s))][kind];
+    }
+    return score;
+  }
+
 
   // Evaluation::threats() assigns bonuses according to the types of the
   // attacking and the attacked pieces.
@@ -537,7 +569,7 @@ namespace {
     constexpr Direction Up       = (Us == WHITE ? NORTH   : SOUTH);
     constexpr Bitboard  TRank3BB = (Us == WHITE ? Rank3BB : Rank6BB);
 
-    Bitboard b, bb, weak, vulnerable, defended, nonPawnEnemies, stronglyProtected, safe, restricted;
+    Bitboard b, b1, b2, b3, weak, defended, nonPawnEnemies, stronglyProtected, safe, restricted;
     Score score = SCORE_ZERO;
 
     // Non-pawn enemies
@@ -550,10 +582,7 @@ namespace {
                        | pawn_double_attacks_bb<Them>(pos.pieces(Them, PAWN));
 
     // Non-pawn enemies, strongly protected
-    defended = nonPawnEnemies & stronglyProtected & ~attackedBy2[Us];
-
-    // The enemy defence are strong but are more likely to be breached later
-    vulnerable = pos.pieces(Them) & stronglyProtected & attackedBy2[Us];
+    defended = pos.pieces(Them) & stronglyProtected;
 
     // Enemies not strongly protected and under our attack
     weak = pos.pieces(Them) & ~stronglyProtected & attackedBy[Us][ALL_PIECES];
@@ -562,56 +591,39 @@ namespace {
     safe = ~attackedBy[Them][ALL_PIECES] | attackedBy[Us][ALL_PIECES];
 
     // Bonus according to the kind of attacking pieces
-    if (defended | weak | vulnerable)
+    if (defended | weak)
     {
-        bb = (attackedBy[Us][KNIGHT] | attackedBy[Us][BISHOP]);
-        b = defended & bb;
+        b3 = defended & attackedBy3[Us];
+        b2 = defended & attackedBy2[Us] & ~b3;
+        b1 = defended & attackedBy[Us][ALL_PIECES] & ~b2;
+
+        score += applyThreatByPiece<Us>(b1, DEFENDED_1ATT);
+        score += applyThreatByPiece<Us>(b2, DEFENDED_2ATT);
+        score += applyThreatByPiece<Us>(b3, DEFENDED_3ATT);
+
+        b3 = weak & attackedBy3[Us];
+        b2 = weak & attackedBy2[Us] & ~b3;
+        b1 = weak & ~b2;
+
+        score += applyThreatByPiece<Us>(b1, WEAK_1ATT);
+        score += applyThreatByPiece<Us>(b2, WEAK_2ATT);
+        score += applyThreatByPiece<Us>(b3, WEAK_3ATT);
+
+        // Only a single threat by rank even if attacked by 2 minors
+        b = (weak | defended) & (attackedBy[Us][KNIGHT] | attackedBy[Us][BISHOP]);
+
         while (b)
         {
             Square s = pop_lsb(&b);
-            score += ThreatByMinor[type_of(pos.piece_on(s))][0];
-        }
-        b = weak & bb;
-        while (b)
-        {
-            Square s = pop_lsb(&b);
-            score += ThreatByMinor[type_of(pos.piece_on(s))][1];
-        }
-        b = vulnerable & bb;
-        while (b)
-        {
-            Square s = pop_lsb(&b);
-            score += ThreatByMinor[type_of(pos.piece_on(s))][2];
-        }
-        while (bb)
-        {
-            Square s = pop_lsb(&bb);
             if (type_of(pos.piece_on(s)) != PAWN)
                 score += ThreatByRank * (int)relative_rank(Them, s);
         }
 
-        bb = attackedBy[Us][ROOK];
-        b = defended & bb;
+        b = weak & attackedBy[Us][ROOK];
+
         while (b)
         {
             Square s = pop_lsb(&b);
-            score += ThreatByRook[type_of(pos.piece_on(s))][0];
-        }
-        b = weak & bb;
-        while (b)
-        {
-            Square s = pop_lsb(&b);
-            score += ThreatByRook[type_of(pos.piece_on(s))][1];
-        }
-        b = vulnerable & bb;
-        while (b)
-        {
-            Square s = pop_lsb(&b);
-            score += ThreatByRook[type_of(pos.piece_on(s))][2];
-        }
-        while (bb)
-        {
-            Square s = pop_lsb(&bb);
             if (type_of(pos.piece_on(s)) != PAWN)
                 score += ThreatByRank * (int)relative_rank(Them, s);
         }
@@ -983,3 +995,4 @@ std::string Eval::trace(const Position& pos) {
 
   return ss.str();
 }
+
