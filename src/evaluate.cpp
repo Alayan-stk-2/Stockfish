@@ -179,6 +179,7 @@ namespace {
 
   private:
     template<Color Us> void initialize();
+    template<Color Us, PieceType Pt> void piecesData();
     template<Color Us, PieceType Pt> Score pieces();
     template<Color Us> Score king() const;
     template<Color Us> Score threats() const;
@@ -192,6 +193,10 @@ namespace {
     Pawns::Entry* pe;
     Bitboard mobilityArea[COLOR_NB];
     Score mobility[COLOR_NB] = { SCORE_ZERO, SCORE_ZERO };
+
+    // mobility[color][piece type] stores mobility data for all pieces,
+    // with several pieces of the same type ordered by bitboard pos lsb.
+    int8_t mobilityValues[COLOR_NB][PIECE_TYPE_NB][10];
 
     // attackedBy[color][piece type] is a bitboard representing all squares
     // attacked by a given color and piece type. Special "piece types" which
@@ -271,19 +276,18 @@ namespace {
     kingRing[Us] &= ~pawn_double_attacks_bb<Us>(pos.pieces(Us, PAWN));
   }
 
-
-  // Evaluation::pieces() scores pieces of a given color and type
+  // Evaluation::piecesData() set up attack bitboards
+  // and mobility values for pieces of a given color and type
   template<Tracing T> template<Color Us, PieceType Pt>
-  Score Evaluation<T>::pieces() {
+  void Evaluation<T>::piecesData() {
 
     constexpr Color     Them = (Us == WHITE ? BLACK : WHITE);
-    constexpr Direction Down = (Us == WHITE ? SOUTH : NORTH);
-    constexpr Bitboard OutpostRanks = (Us == WHITE ? Rank4BB | Rank5BB | Rank6BB
-                                                   : Rank5BB | Rank4BB | Rank3BB);
+
     const Square* pl = pos.squares<Pt>(Us);
 
-    Bitboard b, bb;
-    Score score = SCORE_ZERO;
+    Bitboard b;
+
+    int pct = 0;
 
     attackedBy[Us][Pt] = 0;
 
@@ -308,12 +312,41 @@ namespace {
             kingAttacksCount[Us] += popcount(b & attackedBy[Them][KING]);
         }
 
-        int mob = popcount(b & mobilityArea[Us]);
+        mobilityValues[Us][Pt][pct] = popcount(b & mobilityArea[Us]);
 
+        pct++;
+    }
+  }
+
+  // Evaluation::pieces() scores pieces of a given color and type
+  template<Tracing T> template<Color Us, PieceType Pt>
+  Score Evaluation<T>::pieces() {
+
+    constexpr Color     Them = (Us == WHITE ? BLACK : WHITE);
+    constexpr Direction Down = (Us == WHITE ? SOUTH : NORTH);
+    constexpr Bitboard OutpostRanks = (Us == WHITE ? Rank4BB | Rank5BB | Rank6BB
+                                                   : Rank5BB | Rank4BB | Rank3BB);
+    const Square* pl = pos.squares<Pt>(Us);
+
+    Bitboard b, bb;
+    int pct = 0;
+    Score score = SCORE_ZERO;
+
+    for (Square s = *pl; s != SQ_NONE; s = *++pl)
+    {
+        int mob = mobilityValues[Us][Pt][pct];
         mobility[Us] += MobilityBonus[Pt - 2][mob];
 
         if (Pt == BISHOP || Pt == KNIGHT)
         {
+            // Find attacked squares, including x-ray attacks for bishops and rooks
+            b = Pt == BISHOP ? attacks_bb<BISHOP>(s, pos.pieces() ^ pos.pieces(QUEEN))
+              : Pt ==   ROOK ? attacks_bb<  ROOK>(s, pos.pieces() ^ pos.pieces(QUEEN) ^ pos.pieces(Us, ROOK))
+                         : pos.attacks_from<Pt>(s);
+
+            if (pos.blockers_for_king(Us) & s)
+                b &= LineBB[pos.square<KING>(Us)][s];
+
             // Bonus if piece is on an outpost square or can reach one
             bb = OutpostRanks & ~pe->pawn_attacks_span(Them);
             if (bb & s)
@@ -375,7 +408,9 @@ namespace {
             {
                 File kf = file_of(pos.square<KING>(Us));
                 if ((kf < FILE_E) == (file_of(s) < kf))
+                {
                     score -= TrappedRook * (1 + !pos.castling_rights(Us));
+                }
             }
         }
 
@@ -386,6 +421,7 @@ namespace {
             if (pos.slider_blockers(pos.pieces(Them, ROOK, BISHOP), s, queenPinners))
                 score -= WeakQueen;
         }
+        pct++;
     }
     if (T)
         Trace::add(Pt, Us, score);
@@ -834,6 +870,15 @@ namespace {
     initialize<BLACK>();
 
     // Pieces should be evaluated first (populate attack tables)
+    piecesData<WHITE, KNIGHT>();
+    piecesData<BLACK, KNIGHT>();
+    piecesData<WHITE, BISHOP>();
+    piecesData<BLACK, BISHOP>();
+    piecesData<WHITE, ROOK  >();
+    piecesData<BLACK, ROOK  >();
+    piecesData<WHITE, QUEEN >();
+    piecesData<BLACK, QUEEN >();
+
     score +=  pieces<WHITE, KNIGHT>() - pieces<BLACK, KNIGHT>()
             + pieces<WHITE, BISHOP>() - pieces<BLACK, BISHOP>()
             + pieces<WHITE, ROOK  >() - pieces<BLACK, ROOK  >()
