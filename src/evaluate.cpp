@@ -180,6 +180,7 @@ namespace {
   private:
     template<Color Us> void initialize();
     template<Color Us, PieceType Pt> void piecesData();
+    template<Color Us> void kingMob();
     template<Color Us, PieceType Pt> Score pieces();
     template<Color Us> Score king() const;
     template<Color Us> Score threats() const;
@@ -286,9 +287,7 @@ namespace {
     const Square* pl = pos.squares<Pt>(Us);
 
     Bitboard b;
-
     int pct = 0;
-
     attackedBy[Us][Pt] = 0;
 
     for (Square s = *pl; s != SQ_NONE; s = *++pl)
@@ -316,6 +315,17 @@ namespace {
 
         pct++;
     }
+  }
+
+  // Evaluation::kingMob() evaluates king mobility
+  template<Tracing T> template<Color Us>
+  void Evaluation<T>::kingMob() {
+
+    constexpr Color     Them = (Us == WHITE ? BLACK : WHITE);
+
+    Bitboard movePotential = attackedBy[Us][KING] & ~pos.pieces(Us) & ~attackedBy[Them][ALL_PIECES];
+
+    mobilityValues[Us][KING][0] = popcount(movePotential);
   }
 
   // Evaluation::pieces() scores pieces of a given color and type
@@ -410,6 +420,10 @@ namespace {
                 if ((kf < FILE_E) == (file_of(s) < kf))
                 {
                     score -= TrappedRook * (1 + !pos.castling_rights(Us));
+                    // Even bigger penalty if our king has no prospect
+                    // of moving out of the way
+                    if (mobilityValues[Us][KING][0] <= 0 && mob <=2)
+                        score -= TrappedRook;
                 }
             }
         }
@@ -878,6 +892,9 @@ namespace {
     piecesData<BLACK, ROOK  >();
     piecesData<WHITE, QUEEN >();
     piecesData<BLACK, QUEEN >();
+    // Must be computed after attack tables have been evaluated
+    kingMob<BLACK>();
+    kingMob<WHITE>();
 
     score +=  pieces<WHITE, KNIGHT>() - pieces<BLACK, KNIGHT>()
             + pieces<WHITE, BISHOP>() - pieces<BLACK, BISHOP>()
