@@ -199,6 +199,8 @@ namespace {
     // with several pieces of the same type ordered by bitboard pos lsb.
     int8_t mobilityValues[COLOR_NB][PIECE_TYPE_NB][10];
 
+    bool kingShuffleMob;
+
     // attackedBy[color][piece type] is a bitboard representing all squares
     // attacked by a given color and piece type. Special "piece types" which
     // is also calculated is ALL_PIECES.
@@ -323,9 +325,19 @@ namespace {
 
     constexpr Color     Them = (Us == WHITE ? BLACK : WHITE);
 
+    kingShuffleMob = false;
     Bitboard movePotential = attackedBy[Us][KING] & ~pos.pieces(Us) & ~attackedBy[Them][ALL_PIECES];
 
     mobilityValues[Us][KING][0] = popcount(movePotential);
+
+    if(mobilityValues[Us][KING][0] == 1)
+    {
+        Square s = pop_lsb(&movePotential);
+        Bitboard b = pos.attacks_from<KING>(s) & ~pos.pieces(Us) & ~attackedBy[Them][ALL_PIECES];
+        s = pop_lsb(&b);
+        if(!b && s == pos.square<KING>(Us))
+            kingShuffleMob = true;
+    }
   }
 
   // Evaluation::pieces() scores pieces of a given color and type
@@ -418,13 +430,7 @@ namespace {
             {
                 File kf = file_of(pos.square<KING>(Us));
                 if ((kf < FILE_E) == (file_of(s) < kf))
-                {
                     score -= TrappedRook * (1 + !pos.castling_rights(Us));
-                    // Even bigger penalty if our king has no prospect
-                    // of moving out of the way
-                    if (mobilityValues[Us][KING][0] <= 0 && mob <=2)
-                        score -= TrappedRook;
-                }
             }
         }
 
@@ -454,6 +460,7 @@ namespace {
 
     Bitboard weak, b, b1, b2, safe, unsafeChecks = 0;
     int kingDanger = 0;
+    int kingDangerEg = 0;
     const Square ksq = pos.square<KING>(Us);
 
     // Init the score with king shelter and enemy pawns storm
@@ -528,15 +535,19 @@ namespace {
                  + 185 * popcount(kingRing[Us] & weak)
                  - 100 * bool(attackedBy[Us][KNIGHT] & attackedBy[Us][KING])
                  + 150 * popcount(pos.blockers_for_king(Us) | unsafeChecks)
+                 +  50 * 
                  - 873 * !pos.count<QUEEN>(Them)
                  -   6 * mg_value(score) / 8
                  +       mg_value(mobility[Them] - mobility[Us])
                  +   5 * kingFlankAttacks * kingFlankAttacks / 16
                  -   25;
 
+    kingDangerEg +=  150 * bool(!mobilityValues[Us][KING][0]);
+                   +  60 * kingShuffleMob;
+
     // Transform the kingDanger units into a Score, and subtract it from the evaluation
-    if (kingDanger > 0)
-        score -= make_score(kingDanger * kingDanger / 4096, kingDanger / 16);
+    if (kingDangerEg > 0)
+        score -= make_score(kingDanger * kingDanger / 4096, kingDangerEg / 16);
 
     // Penalty when our king is on a pawnless flank
     if (!(pos.pieces(PAWN) & KingFlank[file_of(ksq)]))
