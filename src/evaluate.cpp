@@ -543,7 +543,7 @@ namespace {
                  -   25;
 
     kingDangerEg +=  150 * bool(!mobilityValues[Us][KING][0]);
-                   +  60 * kingShuffleMob;
+    kingDangerEg +=   60 * kingShuffleMob;
 
     // Transform the kingDanger units into a Score, and subtract it from the evaluation
     if (kingDangerEg > 0)
