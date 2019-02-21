@@ -991,9 +991,9 @@ moves_loop: // When in check, search starts from here
                   continue;
 
               // Prune moves with negative SEE (~10 Elo)
-              // Exception for recpature by king
+              // Exception for recapture by king
               if (!pos.see_ge(move, Value(-29 * lmrDepth * lmrDepth))
-                  && movedPiece != pos.square<KING>(us))
+                  && !(movedPiece == W_KING || movedPiece == B_KING))
                   continue;
           }
           else if (   !extension // (~20 Elo)
