@@ -994,7 +994,9 @@ moves_loop: // When in check, search starts from here
                   continue;
 
               // Prune moves with negative SEE (~10 Elo)
-              if (!pos.see_ge(move, Value(-29 * lmrDepth * lmrDepth)))
+              // Exception for recpature by king
+              if (!pos.see_ge(move, Value(-29 * lmrDepth * lmrDepth))
+                  && movedPiece != pos.square<KING>(us))
                   continue;
           }
           else if (   !extension // (~20 Elo)
@@ -1373,6 +1375,7 @@ moves_loop: // When in check, search starts from here
                        && !pos.capture(move);
 
       // Don't search moves with negative SEE values
+      //TODO
       if (  (!inCheck || evasionPrunable)
           && !pos.see_ge(move))
           continue;
