@@ -165,6 +165,12 @@ namespace {
   constexpr Score WeakUnopposedPawn  = S( 12, 23);
   constexpr Score Outpost            = S(  9,  3);
 
+  int A = 0;
+  int B = 0;
+  int C = 0;
+  int D = 0;
+  int E = 0;
+
 #undef S
 
   // Evaluation class computes and stores attacks tables and other working data
@@ -601,6 +607,23 @@ namespace {
            | (attackedBy[Us][ROOK  ] & pos.attacks_from<ROOK  >(s));
 
         score += SliderOnQueen * popcount(b & safe & attackedBy2[Us]);
+    }
+
+    // Bonus/malus for piece coordination in minors vs queen
+    if (   pos.count<BISHOP>(Them)+pos.count<KNIGHT>(Us) >= 3
+        && (   pos.non_pawn_material(Us) == QueenValueMg
+            || (   pos.non_pawn_material(Us) == QueenValueMg + RookValueMg
+                && pos.count<ROOK>(Them) == 1)))
+    {
+        Bitboard notCovered = (pos.pieces(Them) & ~pos.pieces(KING)) & ~defended;
+
+        int minorSideSynergy =   A * popcount(notCovered)
+                               + B * pe->passed_pawns(Them)
+                               + C * pe->passed_pawns(Us)
+                               + D * bool(pos.count<BISHOP>(Them) == 2)
+                               + E;
+
+        score -= make_score(minorSideSynergy, 2*minorSideSynergy);
     }
 
     if (T)
