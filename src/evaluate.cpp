@@ -165,12 +165,6 @@ namespace {
   constexpr Score WeakUnopposedPawn  = S( 12, 23);
   constexpr Score Outpost            = S(  9,  3);
 
-  int A = 0;
-  int B = 0;
-  int C = 0;
-  int D = 0;
-  int E = 0;
-
 #undef S
 
   // Evaluation class computes and stores attacks tables and other working data
@@ -617,13 +611,13 @@ namespace {
     {
         Bitboard notCovered = (pos.pieces(Them) & ~pos.pieces(KING)) & ~defended;
 
-        int minorSideSynergy =   A * popcount(notCovered)
-                               + B * pe->passed_pawns(Them)
-                               + C * pe->passed_pawns(Us)
-                               + D * bool(pos.count<BISHOP>(Them) == 2)
-                               + E;
+        int minorSideWeakness =   7 * popcount(notCovered)
+                               +  6 * pe->passed_pawns(Them)
+                               + 12 * pe->passed_pawns(Us)
+                               +  6 * bool(pos.count<BISHOP>(Them) == 2)
+                               +  9;
 
-        score -= make_score(minorSideSynergy, 2*minorSideSynergy);
+        score += make_score(minorSideWeakness, 2*minorSideWeakness);
     }
 
     if (T)
