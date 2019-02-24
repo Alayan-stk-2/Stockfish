@@ -603,6 +603,23 @@ namespace {
         score += SliderOnQueen * popcount(b & safe & attackedBy2[Us]);
     }
 
+    // Bonus for diagonal threats on the next move against
+    // defending rooks
+    if (pos.count<ROOK>(Them) >= 1)
+    {
+        b = pos.pieces(Them, ROOK);
+        while (b)
+        {
+            Square s = pop_lsb(&b);
+            Bitboard rookDefense = attackedBy2[Us] & attackedBy2[Them] & pos.attacks_from<ROOK>(s);
+            if (rookDefense)
+            {
+
+                score += SliderOnDefendingRook;
+            }
+        }
+    }
+
     if (T)
         Trace::add(THREAT, Us, score);
 
