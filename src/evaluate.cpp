@@ -161,6 +161,7 @@ namespace {
   constexpr Score ThreatByRank       = S( 13,  0);
   constexpr Score ThreatBySafePawn   = S(173, 94);
   constexpr Score TrappedRook        = S( 47,  4);
+  constexpr Score WeakDefendingRook  = S( 20,  5);
   constexpr Score WeakQueen          = S( 49, 15);
   constexpr Score WeakUnopposedPawn  = S( 12, 23);
   constexpr Score Outpost            = S(  9,  3);
@@ -603,8 +604,8 @@ namespace {
         score += SliderOnQueen * popcount(b & safe & attackedBy2[Us]);
     }
 
-    // Bonus for diagonal threats on the next move against
-    // defending rooks
+    // Bonus when the enemy defence relies on a rook which can't move
+    // TODO : test variation checking that we could attack the rook
     if (pos.count<ROOK>(Them) >= 1)
     {
         b = pos.pieces(Them, ROOK);
@@ -612,10 +613,19 @@ namespace {
         {
             Square s = pop_lsb(&b);
             Bitboard rookDefense = attackedBy2[Us] & attackedBy2[Them] & pos.attacks_from<ROOK>(s);
+
             if (rookDefense)
             {
+                Bitboard moveSquares = pos.attacks_from<ROOK>(s) & ~pos.pieces(Them) & ~attackedBy[Us][ALL_PIECES];
+                // Keep only squares defending the relevant squares
+                while (rookDefense)
+                {
+                    Square s2 = pop_lsb(&rookDefense);
+                    moveSquares &= (file_bb(s2) | rank_bb(s2));
+                }
 
-                score += SliderOnDefendingRook;
+                if (moveSquares == 0) 
+                    score += WeakDefendingRook;
             }
         }
     }
