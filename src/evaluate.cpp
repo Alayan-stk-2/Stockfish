@@ -612,7 +612,7 @@ namespace {
         while (b)
         {
             Square s = pop_lsb(&b);
-            Bitboard rookDefense = attackedBy2[Us] & attackedBy2[Them] & pos.attacks_from<ROOK>(s);
+            Bitboard rookDefense = pos.pieces(Them) & attackedBy2[Us] & attackedBy2[Them] & pos.attacks_from<ROOK>(s);
 
             if (rookDefense)
             {
