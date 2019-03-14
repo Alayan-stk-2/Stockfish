@@ -132,6 +132,12 @@ namespace {
     S(-30,-14), S(-9, -8), S( 0,  9), S( -1,  7)
   };
 
+  Score MinorBehindPawn[RANK_NB]    = {
+    S(10, 0), S(25, 3), S(20, 3), S(18, 3), S(18, 3), S(22, 8)
+  };
+
+TUNE(SetRange(-10, 40), MinorBehindPawn);
+
   // Assorted bonuses and penalties
   constexpr Score BishopPawns        = S(  3,  7);
   constexpr Score CorneredBishop     = S( 50, 50);
@@ -140,7 +146,6 @@ namespace {
   constexpr Score KingProtector      = S(  7,  8);
   constexpr Score KnightOnQueen      = S( 16, 12);
   constexpr Score LongDiagonalBishop = S( 45,  0);
-  constexpr Score MinorBehindPawn    = S( 18,  3);
   constexpr Score Outpost            = S(  9,  3);
   constexpr Score PawnlessFlank      = S( 17, 95);
   constexpr Score RestrictedPiece    = S(  7,  7);
@@ -315,7 +320,7 @@ namespace {
 
             // Knight and Bishop bonus for being right behind a pawn
             if (shift<Down>(pos.pieces(PAWN)) & s)
-                score += MinorBehindPawn;
+                score += MinorBehindPawn[relative_rank(Us, s)];
 
             // Penalty if the piece is far from the king
             score -= KingProtector * distance(s, pos.square<KING>(Us));
