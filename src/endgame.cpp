@@ -374,24 +374,77 @@ ScaleFactor Endgame<KBPsK>::operator()(const Position& pos) const {
 
 
 /// KQ vs KR and one or more pawns. It tests for fortress draws with a rook on
-/// the third rank defended by a pawn.
+/// the third or fourth rank defended by a pawn.
 template<>
-ScaleFactor Endgame<KQKRPs>::operator()(const Position& pos) const {
+ScaleFactor Endgame<KQPsKRPs>::operator()(const Position& pos) const {
 
-  assert(verify_material(pos, strongSide, QueenValueMg, 0));
+  assert(pos.non_pawn_material(strongSide) == QueenValueMg);
   assert(pos.count<ROOK>(weakSide) == 1);
   assert(pos.count<PAWN>(weakSide) >= 1);
 
+  // TODO: This is ugly, tidy it up
+  constexpr Direction DownLeftW  = SOUTH_WEST;
+  constexpr Direction DownRightW = SOUTH_EAST;
+  constexpr Direction DownLeftB  = NORTH_EAST;
+  constexpr Direction DownRightB = NORTH_WEST;
+
+  Bitboard strongSidePawns = pos.pieces(strongSide, PAWN);
+  Bitboard weakSidePawns = pos.pieces(weakSide, PAWN);
+
   Square kingSq = pos.square<KING>(weakSide);
   Square rsq = pos.square<ROOK>(weakSide);
+  Rank rRank = relative_rank(weakSide, rsq);
 
+  // Pawn protect pawn protect rook structures are unbreakable
+  // for a lone queen. If there is one and the weak king
+  // is close to it (thus can't be forced in a corner without moves)
+  // the draw is guaranteed.
+  if (   !strongSidePawns
+      && relative_rank(weakSide, pos.square<KING>(strongSide)) > rRank
+      && relative_rank(weakSide, kingSq) <= rRank)
+  {
+      // TODO: This is very ugly, tidy it up
+      Bitboard is_PPR;
+      if (weakSide == WHITE)
+      {
+          is_PPR =  (shift<DownLeftW>(shift<DownRightW>(pos.pieces(weakSide, ROOK)) & weakSidePawns) & weakSidePawns)
+                  | (shift<DownRightW>(shift<DownLeftW>(pos.pieces(weakSide, ROOK)) & weakSidePawns) & weakSidePawns);
+      }
+      else
+      {
+          is_PPR =  (shift<DownLeftB>(shift<DownRightB>(pos.pieces(weakSide, ROOK)) & weakSidePawns) & weakSidePawns)
+                  | (shift<DownRightB>(shift<DownLeftB>(pos.pieces(weakSide, ROOK)) & weakSidePawns) & weakSidePawns);
+      }
+
+      if(   is_PPR
+         && (pos.attacks_from<KING>(kingSq) & weakSidePawns))
+          return SCALE_FACTOR_DRAW;
+  }
+
+  // Strong side king being heind the rook doesn't guarantee win,
+  // but the draw is much easier if it can never go behind
+  // Hence require this to avoid overcomplicating
   if (    relative_rank(weakSide, kingSq) <= RANK_2
-      &&  relative_rank(weakSide, pos.square<KING>(strongSide)) >= RANK_4
-      &&  relative_rank(weakSide, rsq) == RANK_3
+      &&  (   relative_rank(weakSide, rsq) == RANK_3
+           || relative_rank(weakSide, rsq) == RANK_4)
+      &&  relative_rank(weakSide, pos.square<KING>(strongSide)) >
+          relative_rank(weakSide, rsq))
+  {
+      // Now we want to make sure that the rook can be pawn
+      // defended and that the pawn chain root is defended
+      // either by the king or by the rook if on rank 4.
+
+
+      // Check if the strongSide pawns are useless or not
+
+/*      while(strongSidePawns)
+
       && (  pos.pieces(weakSide, PAWN)
           & pos.attacks_from<KING>(kingSq)
           & pos.attacks_from<PAWN>(rsq, strongSide)))
           return SCALE_FACTOR_DRAW;
+*/
+  }
 
   return SCALE_FACTOR_NONE;
 }
