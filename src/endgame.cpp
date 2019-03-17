@@ -382,6 +382,10 @@ ScaleFactor Endgame<KQPsKRPs>::operator()(const Position& pos) const {
   assert(pos.count<ROOK>(weakSide) == 1);
   assert(pos.count<PAWN>(weakSide) >= 1);
 
+  // Such positions are not handled yet
+  if(pos.count<PAWN>(strongSide) >= 2)
+        return SCALE_FACTOR_NONE;
+
   Bitboard strongSidePawns = pos.pieces(strongSide, PAWN);
   Bitboard weakSidePawns = pos.pieces(weakSide, PAWN);
 
@@ -447,9 +451,7 @@ ScaleFactor Endgame<KQPsKRPs>::operator()(const Position& pos) const {
           if (strongSidePawns & ~SafeRookFiles)
               return SCALE_FACTOR_NONE;
 
-          int att_pawn_count = popcount(strongSidePawns);
-
-          if (att_pawn_count <= 1)
+          if (pos.count<PAWN>(strongSide) <= 1)
               return SCALE_FACTOR_DRAW;
 
           // TODO : handle two or more attacking pawns
