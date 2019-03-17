@@ -401,7 +401,7 @@ ScaleFactor Endgame<KQPsKRPs>::operator()(const Position& pos) const {
       // We don't check for each of the pawns if it defend the rook, rather
       // we check if a strongSide direction pawn capture from the rook
       // leads back to some of the weakside pawns.
-      Bitboard RookPawns = pos.pieces(weakSide, PAWN)
+      Bitboard RookPawns = weakSidePawns
                            & pos.attacks_from<PAWN>(rsq, strongSide);
 
       // Rook not directly protected : this is sometimes ok,
@@ -417,7 +417,7 @@ ScaleFactor Endgame<KQPsKRPs>::operator()(const Position& pos) const {
       {
           Square p = pop_lsb(&b);
           SafeRookFiles |= pos.attacks_from<PAWN>(p, weakSide);
-          PawnsRoots |=  pos.pieces(weakSide, PAWN)
+          PawnsRoots |=  weakSidePawns
                          & pos.attacks_from<PAWN>(p, strongSide);
       }
 
