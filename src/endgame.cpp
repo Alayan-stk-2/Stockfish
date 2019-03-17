@@ -382,12 +382,6 @@ ScaleFactor Endgame<KQPsKRPs>::operator()(const Position& pos) const {
   assert(pos.count<ROOK>(weakSide) == 1);
   assert(pos.count<PAWN>(weakSide) >= 1);
 
-  // TODO: This is ugly, tidy it up
-  constexpr Direction DownLeftW  = SOUTH_WEST;
-  constexpr Direction DownRightW = SOUTH_EAST;
-  constexpr Direction DownLeftB  = NORTH_EAST;
-  constexpr Direction DownRightB = NORTH_WEST;
-
   Bitboard strongSidePawns = pos.pieces(strongSide, PAWN);
   Bitboard weakSidePawns = pos.pieces(weakSide, PAWN);
 
@@ -395,55 +389,71 @@ ScaleFactor Endgame<KQPsKRPs>::operator()(const Position& pos) const {
   Square rsq = pos.square<ROOK>(weakSide);
   Rank rRank = relative_rank(weakSide, rsq);
 
-  // Pawn protect pawn protect rook structures are unbreakable
-  // for a lone queen. If there is one and the weak king
-  // is close to it (thus can't be forced in a corner without moves)
-  // the draw is guaranteed.
-  if (   !strongSidePawns
-      && relative_rank(weakSide, pos.square<KING>(strongSide)) > rRank
-      && relative_rank(weakSide, kingSq) <= rRank)
+  // The strong side king can sometimes be past the rook and the position
+  // still be drawn, but it's harder to detect reliably, so we ignore it.
+  if (   relative_rank(weakSide, pos.square<KING>(strongSide)) > rRank
+      && relative_rank(weakSide, kingSq) < rRank)
   {
-      // TODO: This is very ugly, tidy it up
-      Bitboard is_PPR;
-      if (weakSide == WHITE)
+      // We don't check for each of the pawns if it defend the rook, rather
+      // we check if a strongSide direction pawn capture from the rook
+      // leads back to some of the weakside pawns.
+      Bitboard RookPawns = pos.pieces(weakSide, PAWN)
+                           & pos.attacks_from<PAWN>(rsq, strongSide);
+
+      // Rook not directly protected : this is sometimes ok,
+      // but we have no specific conditions to check it
+      if(!RookPawns)
+          return SCALE_FACTOR_NONE;
+
+      Bitboard b = RookPawns;
+      Bitboard SafeRookFiles = 0;
+      Bitboard PawnsRoots = 0;
+
+      while(b)
       {
-          is_PPR =  (shift<DownLeftW>(shift<DownRightW>(pos.pieces(weakSide, ROOK)) & weakSidePawns) & weakSidePawns)
-                  | (shift<DownRightW>(shift<DownLeftW>(pos.pieces(weakSide, ROOK)) & weakSidePawns) & weakSidePawns);
+          Square p = pop_lsb(&b);
+          SafeRookFiles |= pos.attacks_from<PAWN>(p, weakSide);
+          PawnsRoots |=  pos.pieces(weakSide, PAWN)
+                         & pos.attacks_from<PAWN>(p, strongSide);
       }
-      else
+
+      // No pawn protecting pawn : rook must be on rank 3
+      if (!PawnsRoots && rRank == RANK_3)
       {
-          is_PPR =  (shift<DownLeftB>(shift<DownRightB>(pos.pieces(weakSide, ROOK)) & weakSidePawns) & weakSidePawns)
-                  | (shift<DownRightB>(shift<DownLeftB>(pos.pieces(weakSide, ROOK)) & weakSidePawns) & weakSidePawns);
+          // Some positions with a single strong side pawn are drawn,
+          // but the file they are on isn't a sufficient condition
+          // because of potential KPKP zugzwang wins, so we ignore them.
+          if (   !strongSidePawns
+              && (  RookPawns
+                  & pos.attacks_from<KING>(kingSq)))
+              return SCALE_FACTOR_DRAW;
       }
 
-      if(   is_PPR
-         && (pos.attacks_from<KING>(kingSq) & weakSidePawns))
-          return SCALE_FACTOR_DRAW;
-  }
+      // If a pawn protects the pawn protecting the rook
+      // and it is protected by the king, this may be a draw
+      if ( pos.attacks_from<KING>(kingSq) & PawnsRoots)
+      {
+          // We must only check that there is no winning
+          // pawn combination for the strong side.
+          b = SafeRookFiles;
+          while(b)
+          {
+              Square s = pop_lsb(&b);
+              SafeRookFiles |= file_bb(s);
+          }
 
-  // Strong side king being heind the rook doesn't guarantee win,
-  // but the draw is much easier if it can never go behind
-  // Hence require this to avoid overcomplicating
-  if (    relative_rank(weakSide, kingSq) <= RANK_2
-      &&  (   relative_rank(weakSide, rsq) == RANK_3
-           || relative_rank(weakSide, rsq) == RANK_4)
-      &&  relative_rank(weakSide, pos.square<KING>(strongSide)) >
-          relative_rank(weakSide, rsq))
-  {
-      // Now we want to make sure that the rook can be pawn
-      // defended and that the pawn chain root is defended
-      // either by the king or by the rook if on rank 4.
+          // Pawns that the rook can't stop while staying
+          // protected are almost always winning.
+          if (strongSidePawns & ~SafeRookFiles)
+              return SCALE_FACTOR_NONE;
 
+          int att_pawn_count = popcount(strongSidePawns);
 
-      // Check if the strongSide pawns are useless or not
+          if (att_pawn_count <= 1)
+              return SCALE_FACTOR_DRAW;
 
-/*      while(strongSidePawns)
-
-      && (  pos.pieces(weakSide, PAWN)
-          & pos.attacks_from<KING>(kingSq)
-          & pos.attacks_from<PAWN>(rsq, strongSide)))
-          return SCALE_FACTOR_DRAW;
-*/
+          // TODO : handle two or more attacking pawns
+      }
   }
 
   return SCALE_FACTOR_NONE;
