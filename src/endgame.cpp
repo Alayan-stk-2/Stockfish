@@ -373,8 +373,8 @@ ScaleFactor Endgame<KBPsK>::operator()(const Position& pos) const {
 }
 
 
-/// KQ vs KR and one or more pawns. It tests for fortress draws with a rook on
-/// the third or fourth rank defended by a pawn.
+/// KQ and up to one pawn vs KR and one or more pawns. It tests for fortress draws
+/// with a rook defended by a pawn.
 template<>
 ScaleFactor Endgame<KQPsKRPs>::operator()(const Position& pos) const {
 
