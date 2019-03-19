@@ -421,31 +421,39 @@ ScaleFactor Endgame<KQPsKRPs>::operator()(const Position& pos) const {
                          & pos.attacks_from<PAWN>(p, strongSide);
       }
 
-      // No pawn protecting pawn : rook must be on rank 3
-      if (!PawnsRoots && rRank == RANK_3)
+      if (pos.count<PAWN>(strongSide) >= 1)
       {
-          // Some positions with a single strong side pawn are drawn,
-          // but the file they are on isn't a sufficient condition
-          // because of potential KPKP zugzwang wins, so we ignore them.
-          if (   !strongSidePawns
-              && (  RookPawns
-                  & pos.attacks_from<KING>(kingSq)))
-              return SCALE_FACTOR_DRAW;
-      }
-
-      // If a pawn protects the pawn protecting the rook
-      // and it is protected by the king, this may be a draw
-      if ( pos.attacks_from<KING>(kingSq) & PawnsRoots)
-      {
-          // We must only check that there is no winning
-          // pawn combination for the strong side.
           b = SafeRookFiles;
           while(b)
           {
               Square s = pop_lsb(&b);
               SafeRookFiles |= file_bb(s);
           }
+      }
 
+      // No pawn protecting pawn : rook must be on rank 3,
+      // king must defend the pawn.
+      if (   !PawnsRoots
+          && rRank == RANK_3
+          && (  RookPawns & pos.attacks_from<KING>(kingSq)))
+      {
+          if ( !strongSidePawns)
+              return SCALE_FACTOR_DRAW;
+
+          // The position is drawn with one strong side pawn
+          // if it is on the same file as the weak side king
+          // and this is a safe rook file.
+          if (   pos.count<PAWN>(strongSide) == 1
+              && ((file_bb(kingSq) & SafeRookFiles) & strongSidePawns))
+              return SCALE_FACTOR_DRAW;
+      }
+
+      // If a pawn protects the pawn protecting the rook
+      // and it is protected by the king, this may be a draw
+      // We must only check that there is no winning
+      // pawn combination for the strong side.
+      if ( pos.attacks_from<KING>(kingSq) & PawnsRoots)
+      {
           // Pawns that the rook can't stop while staying
           // protected are almost always winning.
           if (strongSidePawns & ~SafeRookFiles)
