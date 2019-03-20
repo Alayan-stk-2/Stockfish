@@ -382,9 +382,9 @@ ScaleFactor Endgame<KQPsKRPs>::operator()(const Position& pos) const {
   assert(pos.count<ROOK>(weakSide) == 1);
   assert(pos.count<PAWN>(weakSide) >= 1);
 
-  // Such positions are not handled yet
+  // Positions with 3 or more strongSide pawns are not handled
   if(pos.count<PAWN>(strongSide) >= 2)
-        return SCALE_FACTOR_NONE;
+      return SCALE_FACTOR_NONE;
 
   Bitboard strongSidePawns = pos.pieces(strongSide, PAWN);
   Bitboard weakSidePawns = pos.pieces(weakSide, PAWN);
@@ -443,6 +443,9 @@ ScaleFactor Endgame<KQPsKRPs>::operator()(const Position& pos) const {
           // The position is drawn with one strong side pawn
           // if it is on the same file as the weak side king
           // and this is a safe rook file.
+          // There are some exceptions when an additional
+          // weak side piece is harmful, but search quickly
+          // finds a way to force the fortress detection to stop.
           if (   pos.count<PAWN>(strongSide) == 1
               && ((file_bb(kingSq) & SafeRookFiles) & strongSidePawns))
               return SCALE_FACTOR_DRAW;
@@ -462,7 +465,10 @@ ScaleFactor Endgame<KQPsKRPs>::operator()(const Position& pos) const {
           if (pos.count<PAWN>(strongSide) <= 1)
               return SCALE_FACTOR_DRAW;
 
-          // TODO : handle two or more attacking pawns
+          // In two attacking pawns positions,
+          // there is a queen sac danger which
+          // sometimes requires to put the rook
+          // out of pawn defense. Not handled for now.
       }
   }
 
