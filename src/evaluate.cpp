@@ -359,23 +359,11 @@ namespace {
             if (pe->semiopen_file(Us, file_of(s)))
                 score += RookOnFile[bool(pe->semiopen_file(Them, file_of(s)))];
 
-            // Malus for rook overload with check threat
-            if (pos.attacks_from<ROOK>(s) & pos.square<KING>(Us))
-            {
-                Bitboard PotentialOverload = pos.pieces(Us) & pos.attacks_from<ROOK>(s) & (~attackedBy2[Us] | attackedBy2[Them]) & ~pos.square<KING>(Us);
-                if (PotentialOverload)
-                {
-                    if(   file_of(s) == file_of(pos.square<KING>(Us))
-                       && (PotentialOverload & file_of(s) & (attackedBy[Them][ROOK] | attackedBy[Them][QUEEN]))
-                       && (PotentialOverload & ~file_of(s)))
-                        score -= OverloadedRook;
-                    else if(   rank_of(s) == rank_of(pos.square<KING>(Us))
-                       && (PotentialOverload & rank_of(s) & (attackedBy[Them][ROOK] | attackedBy[Them][QUEEN]))
-                       && (PotentialOverload & ~rank_of(s)))
-                        score -= OverloadedRook;
-                }
-
-            }
+            // Malus for rook overload
+            Bitboard PotentialOverload = pos.pieces(Us) & pos.attacks_from<ROOK>(s) & attackedBy[Them][ALL_PIECES] & (~attackedBy2[Us] | attackedBy2[Them]);
+            if (   (PotentialOverload & ~file_of(s))
+                && (PotentialOverload & ~rank_of(s)))
+                    score -= OverloadedRook;
 
             // Penalty when trapped by the king, even more if the king cannot castle
             else if (mob <= 3)
