@@ -253,6 +253,11 @@ enum Rank : int {
   RANK_1, RANK_2, RANK_3, RANK_4, RANK_5, RANK_6, RANK_7, RANK_8, RANK_NB
 };
 
+// Used for pawn evaluations
+enum CenterBlock : int {
+  NO_ADV_BLOCK, KS_BLOCK, QS_BLOCK
+};
+
 
 /// Score enum stores a middlegame and an endgame value in a single integer (enum).
 /// The least significant 16 bits are used to store the middlegame value and the
