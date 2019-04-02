@@ -40,7 +40,7 @@ namespace {
 
   // Strength of pawn shelter for our king by [file][rank].
   // RANK_1 = 0 is used for files where we have no pawn, or pawn is behind our king.
-  constexpr Value ShelterStrength[FILE_NB][RANK_NB] = {
+  Value ShelterStrength[FILE_NB][RANK_NB] = {
     { V( -6), V( 90), V( 92), V( 61), V( 38), V( 17), V(  26) },
     { V(-43), V( 64), V( 31), V(-51), V(-28), V(-11), V( -69) },
     { V( -9), V( 70), V( 25), V( -2), V( 32), V(  3), V( -39) },
@@ -51,7 +51,7 @@ namespace {
     { V( -5), V( 76), V( 92), V( 58), V( 36), V( 18), V(  24) }
   };
 
-  constexpr Value ShelterStrengthKSB[FILE_NB][RANK_NB] = {
+  Value ShelterStrengthKSB[FILE_NB][RANK_NB] = {
     { V( -6), V( 90), V( 92), V( 61), V( 38), V( 17), V(  26) },
     { V(-43), V( 64), V( 31), V(-51), V(-28), V(-11), V( -69) },
     { V( -9), V( 70), V( 25), V( -2), V( 32), V(  3), V( -39) },
@@ -62,7 +62,7 @@ namespace {
     { V( -5), V( 76), V( 92), V( 58), V( 36), V( 18), V(  24) }
   };
 
-  constexpr Value ShelterStrengthQSB[FILE_NB][RANK_NB] = {
+  Value ShelterStrengthQSB[FILE_NB][RANK_NB] = {
     { V( -6), V( 90), V( 92), V( 61), V( 38), V( 17), V(  26) },
     { V(-43), V( 64), V( 31), V(-51), V(-28), V(-11), V( -69) },
     { V( -9), V( 70), V( 25), V( -2), V( 32), V(  3), V( -39) },
@@ -72,12 +72,14 @@ namespace {
     { V(-48), V( 60), V( 33), V(-51), V(-29), V(-11), V( -67) },
     { V( -5), V( 76), V( 92), V( 58), V( 36), V( 18), V(  24) }
   };
+
+TUNE(SetRange(-200,120), ShelterStrength, ShelterStrengthKSB, ShelterStrengthQSB);
 
 
   // Danger of enemy pawns moving toward our king by [file][rank].
   // RANK_1 = 0 is used for files where the enemy has no pawn, or their pawn
   // is behind our king.
-  constexpr Value UnblockedStorm[FILE_NB][RANK_NB] = {
+  Value UnblockedStorm[FILE_NB][RANK_NB] = {
     { V( 90), V(102), V(125), V(95), V(59), V( 45), V( 47) },
     { V( 46), V(-19), V(133), V(46), V(40), V( -7), V( 22) },
     { V(  4), V( 50), V(152), V(37), V( 7), V(-13), V( -2) },
@@ -88,7 +90,7 @@ namespace {
     { V( 91), V(109), V(108), V(97), V(59), V( 46), V( 50) }
   };
 
-  constexpr Value UnblockedStormKSB[FILE_NB][RANK_NB] = {
+  Value UnblockedStormKSB[FILE_NB][RANK_NB] = {
     { V( 90), V(102), V(125), V(95), V(59), V( 45), V( 47) },
     { V( 46), V(-19), V(133), V(46), V(40), V( -7), V( 22) },
     { V(  4), V( 50), V(152), V(37), V( 7), V(-13), V( -2) },
@@ -99,7 +101,7 @@ namespace {
     { V( 91), V(109), V(108), V(97), V(59), V( 46), V( 50) }
   };
 
-  constexpr Value UnblockedStormQSB[FILE_NB][RANK_NB] = {
+  Value UnblockedStormQSB[FILE_NB][RANK_NB] = {
     { V( 90), V(102), V(125), V(95), V(59), V( 45), V( 47) },
     { V( 46), V(-19), V(133), V(46), V(40), V( -7), V( 22) },
     { V(  4), V( 50), V(152), V(37), V( 7), V(-13), V( -2) },
@@ -109,6 +111,8 @@ namespace {
     { V( 45), V(-17), V(127), V(42), V(36), V( -8), V( 24) },
     { V( 91), V(109), V(108), V(97), V(59), V( 46), V( 50) }
   };
+
+TUNE(SetRange(-70,250), UnblockedStorm, UnblockedStormKSB, UnblockedStormQSB);
 
   #undef S
   #undef V
@@ -265,16 +269,15 @@ Value Entry::evaluate_shelter(const Position& pos, Square ksq) {
       b = theirPawns & file_bb(f);
       Rank theirRank = b ? relative_rank(Us, frontmost_sq(Them, b)) : RANK_1;
 
-      int d = std::min(f, ~f);
-      safety += (centerStatus[Us] == KS_BLOCK) ? ShelterStrengthKSB[d][ourRank] :
-                (centerStatus[Us] == QS_BLOCK) ? ShelterStrengthQSB[d][ourRank] :
-                                                 ShelterStrength[d][ourRank];
+      safety += (centerStatus[Us] == KS_BLOCK) ? ShelterStrengthKSB[f][ourRank] :
+                (centerStatus[Us] == QS_BLOCK) ? ShelterStrengthQSB[f][ourRank] :
+                                                 ShelterStrength[f][ourRank];
       safety -= (ourRank && (ourRank == theirRank - 1)) ? 66 * (theirRank == RANK_3)
                                                         : (centerStatus[Them] == KS_BLOCK)
-                                                        ? UnblockedStormKSB[d][theirRank]
+                                                        ? UnblockedStormKSB[f][theirRank]
                                                         : (centerStatus[Them] == QS_BLOCK)
-                                                        ? UnblockedStormQSB[d][theirRank]
-                                                        : UnblockedStorm[d][theirRank];
+                                                        ? UnblockedStormQSB[f][theirRank]
+                                                        : UnblockedStorm[f][theirRank];
   }
 
   return safety;
