@@ -38,23 +38,76 @@ namespace {
   // Connected pawn bonus
   constexpr int Connected[RANK_NB] = { 0, 13, 24, 18, 65, 100, 175, 330 };
 
-  // Strength of pawn shelter for our king by [distance from edge][rank].
+  // Strength of pawn shelter for our king by [file][rank].
   // RANK_1 = 0 is used for files where we have no pawn, or pawn is behind our king.
-  constexpr Value ShelterStrength[int(FILE_NB) / 2][RANK_NB] = {
-    { V( -6), V( 81), V( 93), V( 58), V( 39), V( 18), V(  25) },
-    { V(-43), V( 61), V( 35), V(-49), V(-29), V(-11), V( -63) },
-    { V(-10), V( 75), V( 23), V( -2), V( 32), V(  3), V( -45) },
-    { V(-39), V(-13), V(-29), V(-52), V(-48), V(-67), V(-166) }
+  constexpr Value ShelterStrength[FILE_NB][RANK_NB] = {
+    { V( -8), V( 84), V( 98), V( 74), V( 52), V( 17), V(  25) },
+    { V(-53), V( 51), V( 28), V(-41), V(-22), V(-15), V( -64) },
+    { V( -6), V( 76), V( 35), V( -2), V( 37), V( -1), V( -41) },
+    { V(-46), V(-18), V(-32), V(-56), V(-41), V(-60), V(-154) },
+    { V(-56), V( -5), V(-26), V(-60), V(-38), V(-62), V(-130) },
+    { V(-15), V( 72), V( 24), V(-10), V( 22), V( -2), V( -65) },
+    { V(-54), V( 64), V( 24), V(-44), V(-28), V(-22), V( -56) },
+    { V(  6), V( 71), V( 89), V( 48), V( 22), V( 25), V(  21) }
   };
 
-  // Danger of enemy pawns moving toward our king by [distance from edge][rank].
+  constexpr Value ShelterStrengthKSB[FILE_NB][RANK_NB] = {
+    { V(  4), V( 76), V( 89), V( 45), V( 30), V( 23), V(  13) },
+    { V(-63), V( 81), V( 43), V(-80), V(-48), V(-19), V( -57) },
+    { V(-12), V( 45), V( 24), V( 39), V( 46), V( 18), V( -43) },
+    { V(  0), V( -5), V(-42), V(-67), V(  0), V(  0), V(   0) },
+    { V(  0), V(-19), V(-46), V(-58), V(-39), V(  0), V(   0) },
+    { V(  9), V( 76), V( 24), V(-14), V( 34), V( -8), V( -39) },
+    { V(-53), V( 50), V( 25), V(-35), V(-37), V(-24), V( -88) },
+    { V(-14), V( 91), V( 74), V( 66), V( 67), V( 16), V(  32) }
+  };
+
+  constexpr Value ShelterStrengthQSB[FILE_NB][RANK_NB] = {
+    { V(  2), V(106), V( 90), V( 58), V( 43), V( 28), V(  28) },
+    { V(-59), V( 43), V( 50), V(-67), V(-38), V( -6), V( -64) },
+    { V( -2), V( 60), V( 13), V( -8), V( 38), V(-18), V( -40) },
+    { V(  0), V( -3), V(-40), V(-60), V(-50), V(  0), V(   0) },
+    { V(  0), V( 20), V(-29), V(-66), V(  0), V(  0), V(   0) },
+    { V(-17), V( 60), V( 38), V(-23), V( 47), V(-12), V( -53) },
+    { V(-45), V( 69), V( 29), V(-49), V( -8), V(-40), V( -81) },
+    { V(  0), V( 80), V(102), V( 59), V( 33), V( 21), V(  17) }
+  };
+
+  // Danger of enemy pawns moving toward our king by [file][rank].
   // RANK_1 = 0 is used for files where the enemy has no pawn, or their pawn
   // is behind our king.
-  constexpr Value UnblockedStorm[int(FILE_NB) / 2][RANK_NB] = {
-    { V( 89), V(107), V(123), V(93), V(57), V( 45), V( 51) },
-    { V( 44), V(-18), V(123), V(46), V(39), V( -7), V( 23) },
-    { V(  4), V( 52), V(162), V(37), V( 7), V(-14), V( -2) },
-    { V(-10), V(-14), V( 90), V(15), V( 2), V( -7), V(-16) }
+  // The rank is relative to the king targeted by the potential pawn storm.
+  constexpr Value UnblockedStorm[FILE_NB][RANK_NB] = {
+    { V( 85), V( 98), V(134), V(104), V(47), V( 47), V( 54) },
+    { V( 49), V(-14), V(135), V( 50), V(55), V(  2), V( 26) },
+    { V(  4), V( 51), V(171), V( 30), V( 5), V( -8), V(  6) },
+    { V(-12), V(-11), V( 74), V( 25), V(11), V(-25), V(-22) },
+    { V( -1), V(-12), V( 97), V( 17), V( 8), V(-15), V(  0) },
+    { V(  5), V( 66), V(159), V( 29), V( 3), V(-10), V(  2) },
+    { V( 53), V(-13), V(134), V( 45), V(27), V(-10), V( 20) },
+    { V( 84), V( 84), V(114), V( 97), V(69), V( 53), V( 51) }
+  };
+
+  constexpr Value UnblockedStormKSB[FILE_NB][RANK_NB] = {
+    { V( 91), V(107), V(122), V( 97), V(53), V( 17), V( 41) },
+    { V( 20), V( -6), V(126), V( 62), V(48), V(  6), V( 26) },
+    { V( 16), V( 60), V(155), V( 42), V( 9), V(-17), V( 10) },
+    { V(  0), V(  0), V(  0), V(  0), V( 0), V(  0), V(  0) },
+    { V(  0), V(  0), V(  0), V(  0), V( 0), V(  0), V(  0) },
+    { V( -8), V( 53), V(172), V( 37), V( 3), V(-38), V( 21) },
+    { V( 49), V( 16), V(125), V( 48), V(35), V(-21), V( 36) },
+    { V(100), V(111), V( 92), V(102), V(70), V( 59), V( 44) }
+  };
+
+  constexpr Value UnblockedStormQSB[FILE_NB][RANK_NB] = {
+    { V( 90), V( 99), V(124), V(68), V(41), V( 59), V( 54) },
+    { V( 41), V( -7), V(128), V(31), V(28), V( -4), V( 16) },
+    { V( -9), V( 50), V(157), V(46), V(21), V(-18), V( -4) },
+    { V(  0), V(  0), V(  0), V( 0), V( 0), V(  0), V(  0) },
+    { V(  0), V(  0), V(  0), V( 0), V( 0), V(  0), V(  0) },
+    { V( -2), V( 47), V(156), V(35), V(33), V(-12), V(-10) },
+    { V( 40), V( 10), V(122), V(43), V(22), V(-21), V( 23) },
+    { V( 85), V(110), V(114), V(93), V(72), V( 37), V( 49) }
   };
 
   #undef S
@@ -65,6 +118,10 @@ namespace {
 
     constexpr Color     Them = (Us == WHITE ? BLACK : WHITE);
     constexpr Direction Up   = (Us == WHITE ? NORTH : SOUTH);
+    constexpr Direction Down = (Us == WHITE ? SOUTH : NORTH);
+
+    constexpr Bitboard d5e4 = 0x0810000000ULL;
+    constexpr Bitboard d4e5 = 0x1008000000ULL;
 
     Bitboard b, neighbours, stoppers, doubled, support, phalanx;
     Bitboard lever, leverPush;
@@ -82,6 +139,15 @@ namespace {
     e->pawnAttacks[Us]   = pawn_attacks_bb<Us>(ourPawns);
     e->pawnsOnSquares[Us][BLACK] = popcount(ourPawns & DarkSquares);
     e->pawnsOnSquares[Us][WHITE] = pos.count<PAWN>(Us) - e->pawnsOnSquares[Us][BLACK];
+
+    if (   (ourPawns   & d4e5) == d4e5
+        && (shift<Down>(theirPawns) & d4e5) == d4e5)
+        e->centerStatus[Us] = (Us == WHITE) ? KS_BLOCK : QS_BLOCK;
+    else if((ourPawns  & d5e4) == d5e4
+        && (shift<Down>(theirPawns) & d5e4) == d5e4)
+        e->centerStatus[Us] = (Us == WHITE) ? QS_BLOCK : KS_BLOCK;
+    else
+        e->centerStatus[Us] = NO_ADV_BLOCK;
 
     // Loop through all pawns of the current color and score each pawn
     while ((s = *pl++) != SQ_NONE)
@@ -199,10 +265,18 @@ Value Entry::evaluate_shelter(const Position& pos, Square ksq) {
       b = theirPawns & file_bb(f);
       Rank theirRank = b ? relative_rank(Us, frontmost_sq(Them, b)) : RANK_1;
 
-      int d = std::min(f, ~f);
-      safety += ShelterStrength[d][ourRank];
+      safety += (centerStatus[Us] == KS_BLOCK) ? ShelterStrengthKSB[f][ourRank] :
+                (centerStatus[Us] == QS_BLOCK) ? ShelterStrengthQSB[f][ourRank] :
+                                                 ShelterStrength[f][ourRank];
+
+      // Apply unblocked storm if our backmost pawn in a file is not immediately blocked
+      // by the frontmost enemy pawn in the file.
       safety -= (ourRank && (ourRank == theirRank - 1)) ? 66 * (theirRank == RANK_3)
-                                                        : UnblockedStorm[d][theirRank];
+                                                        : (centerStatus[Them] == KS_BLOCK)
+                                                        ? UnblockedStormKSB[f][theirRank]
+                                                        : (centerStatus[Them] == QS_BLOCK)
+                                                        ? UnblockedStormQSB[f][theirRank]
+                                                        : UnblockedStorm[f][theirRank];
   }
 
   return safety;
