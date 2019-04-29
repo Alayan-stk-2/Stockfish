@@ -618,7 +618,7 @@ namespace {
         int mob_diff = globalMobility[Us] - globalMobility[Them];
         mob_diff *= std::max(globalMobility[Us], globalMobility[Them]);
         mob_diff /= std::min(globalMobility[Us]+4, globalMobility[Them]+4);
-        score += make_score(mob_diff, mob_diff*2);
+        score += make_score(mob_diff/4, mob_diff/2);
     }
 
 
