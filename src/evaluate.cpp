@@ -85,6 +85,9 @@ namespace {
   constexpr int BishopSafeCheck = 635;
   constexpr int KnightSafeCheck = 790;
 
+  constexpr int MobilityPoints[10]        = {0, 3, 6, 8, 10, 12, 13, 14, 15, 16};
+  constexpr int OutsideMobilityPoints[10] = {0, 2, 4, 5,  6,  7,  8,  9, 10, 11};
+
 #define S(mg, eg) make_score(mg, eg)
 
   // MobilityBonus[PieceType-2][attacked] contains bonuses for middle and end game,
@@ -213,6 +216,12 @@ namespace {
     // a white knight on g5 and black's king is on g8, this white knight adds 2
     // to kingAttacksCount[WHITE].
     int kingAttacksCount[COLOR_NB];
+
+    // globalMobility is an aggregate of the mobility of all non-pawn pieces
+    // of a given color. Having one low mobility piece isn't a big issue
+    // if the others are active, but if there is a consistent pattern of
+    // worse mobility the position is likely to be bad.
+    int globalMobility[COLOR_NB];
   };
 
 
@@ -225,6 +234,8 @@ namespace {
     constexpr Direction Up   = (Us == WHITE ? NORTH : SOUTH);
     constexpr Direction Down = (Us == WHITE ? SOUTH : NORTH);
     constexpr Bitboard LowRanks = (Us == WHITE ? Rank2BB | Rank3BB: Rank7BB | Rank6BB);
+
+    globalMobility[Us] = 0;
 
     const Square ksq = pos.square<KING>(Us);
 
@@ -271,6 +282,7 @@ namespace {
     constexpr Direction Down = (Us == WHITE ? SOUTH : NORTH);
     constexpr Bitboard OutpostRanks = (Us == WHITE ? Rank4BB | Rank5BB | Rank6BB
                                                    : Rank5BB | Rank4BB | Rank3BB);
+    constexpr Bitboard LowRanks = (Us == WHITE ? Rank1BB | Rank2BB: Rank7BB | Rank8BB);
     const Square* pl = pos.squares<Pt>(Us);
 
     Bitboard b, bb;
@@ -302,6 +314,10 @@ namespace {
         int mob = popcount(b & mobilityArea[Us]);
 
         mobility[Us] += MobilityBonus[Pt - 2][mob];
+
+        globalMobility[Us] += (mob < 9) ? MobilityPoints[mob] : MobilityPoints[10];
+        int outsideMob = popcount(b & mobilityArea[Us] & ~LowRanks);
+        globalMobility[Us] += (outsideMob < 9) ? OutsideMobilityPoints[outsideMob] : OutsideMobilityPoints[10];
 
         if (Pt == BISHOP || Pt == KNIGHT)
         {
@@ -594,6 +610,17 @@ namespace {
 
         score += SliderOnQueen * popcount(b & safe & attackedBy2[Us]);
     }
+
+    // Evaluate global mobility
+    //FIXME : not an ideal place for it.
+    if (Us==WHITE)
+    {
+        int mob_diff = globalMobility[Us] - globalMobility[Them];
+        mob_diff *= std::max(globalMobility[Us], globalMobility[Them]);
+        mob_diff /= std::min(globalMobility[Us]+4, globalMobility[Them]+4);
+        score += make_score(mob_diff, mob_diff*2);
+    }
+
 
     if (T)
         Trace::add(THREAT, Us, score);
