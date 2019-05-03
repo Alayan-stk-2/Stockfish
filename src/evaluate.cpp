@@ -405,8 +405,8 @@ namespace {
     File center = clamp(file_of(ksq), FILE_B, FILE_G);
     for (File f = File(center - 1); f <= File(center + 1); ++f)
     {
-        if (   !(pos.pieces(Us, PAWN) & f)
-            &&  (pos.pieces(Us, BISHOP) & f & attackedBy[Us][PAWN]))
+        if (   !(pos.pieces(Us, PAWN) & file_bb(f))
+            &&  (pos.pieces(Us, BISHOP) & file_bb(f) & attackedBy[Us][PAWN]))
             bishopPawnShelter = true;
     }
 
