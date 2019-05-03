@@ -394,11 +394,21 @@ namespace {
 
     Bitboard weak, b1, b2, safe, unsafeChecks = 0;
     Bitboard rookChecks, queenChecks, bishopChecks, knightChecks;
+    bool bishopPawnShelter = false;
     int kingDanger = 0;
     const Square ksq = pos.square<KING>(Us);
 
     // Init the score with king shelter and enemy pawns storm
     Score score = pe->king_safety<Us>(pos);
+
+    // Check if there is a bishop replacing a pawn in the shelter
+    File center = clamp(file_of(ksq), FILE_B, FILE_G);
+    for (File f = File(center - 1); f <= File(center + 1); ++f)
+    {
+        if (   !(pos.pieces(Us, PAWN) & f)
+            &&  (pos.pieces(Us, BISHOP) & f & attackedBy[Us][PAWN]))
+            bishopPawnShelter = true;
+    }
 
     // Attacked squares defended at most once by our queen or king
     weak =  attackedBy[Them][ALL_PIECES]
@@ -467,6 +477,7 @@ namespace {
                  + 185 * popcount(kingRing[Us] & weak)
                  - 100 * bool(attackedBy[Us][KNIGHT] & attackedBy[Us][KING])
                  -  35 * bool(attackedBy[Us][BISHOP] & attackedBy[Us][KING])
+                 -  80 * bishopPawnShelter
                  + 150 * popcount(pos.blockers_for_king(Us) | unsafeChecks)
                  - 873 * !pos.count<QUEEN>(Them)
                  -   6 * mg_value(score) / 8
