@@ -367,6 +367,14 @@ namespace {
                 if ((kf < FILE_E) == (file_of(s) < kf))
                     score -= TrappedRook * (1 + !pos.castling_rights(Us));
             }
+            // Penalty when it can't move at all without another piece moving first
+            // Mob can be several points above 0 because of x-ray
+            else if (relative_rank(Us, s) == RANK_1 &&
+                     (shift<Down>(pos.pieces(Us)) & shift<EAST>(pos.pieces(Us))
+                                                 & shift<WEST>(pos.pieces(Us)) & s))
+            {
+                mobility[Us] += MobilityBonus[Pt - 2][0] - MobilityBonus[Pt - 2][mob];
+            }
         }
 
         if (Pt == QUEEN)
