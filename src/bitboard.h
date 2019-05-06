@@ -65,6 +65,28 @@ constexpr Bitboard CenterFiles = FileCBB | FileDBB | FileEBB | FileFBB;
 constexpr Bitboard KingSide    = FileEBB | FileFBB | FileGBB | FileHBB;
 constexpr Bitboard Center      = (FileDBB | FileEBB) & (Rank4BB | Rank5BB);
 
+constexpr Bitboard FiveSurrR[RANK_NB] = {
+  Rank1BB | Rank2BB | Rank3BB,
+  Rank1BB | Rank2BB | Rank3BB | Rank4BB,
+  Rank1BB | Rank2BB | Rank3BB | Rank4BB | Rank5BB,
+  Rank2BB | Rank3BB | Rank4BB | Rank5BB | Rank6BB,
+  Rank3BB | Rank4BB | Rank5BB | Rank6BB | Rank7BB,
+  Rank4BB | Rank5BB | Rank6BB | Rank7BB | Rank8BB,
+  Rank5BB | Rank6BB | Rank7BB | Rank8BB,
+  Rank6BB | Rank7BB | Rank8BB
+};
+
+constexpr Bitboard FiveSurrF[FILE_NB] = {
+  FileABB | FileBBB | FileCBB,
+  FileABB | FileBBB | FileCBB | FileDBB,
+  FileABB | FileBBB | FileCBB | FileDBB | FileEBB,
+  FileBBB | FileCBB | FileDBB | FileEBB | FileFBB,
+  FileCBB | FileDBB | FileEBB | FileFBB | FileGBB,
+  FileDBB | FileEBB | FileFBB | FileGBB | FileHBB,
+  FileEBB | FileFBB | FileGBB | FileHBB,
+  FileFBB | FileGBB | FileHBB
+};
+
 constexpr Bitboard KingFlank[FILE_NB] = {
   QueenSide ^ FileDBB, QueenSide, QueenSide,
   CenterFiles, CenterFiles,

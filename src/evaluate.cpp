@@ -132,6 +132,17 @@ namespace {
     S(-30,-14), S(-9, -8), S( 0,  9), S( -1,  7)
   };
 
+  constexpr Score OutpostN[9][2] = {
+    { S( 0, 0), S(16,  8) }, // 0 enemies
+    { S( 8, 5), S(30, 20) },
+    { S(16, 8), S(44, 30) },
+    { S(24,10), S(56, 38) },
+    { S(36,12), S(64, 44) },
+    { S(40,13), S(72, 50) },
+    { S(44,14), S(76, 56) },
+    { S(48,16), S(80, 62) }, // 8 enemies
+  };
+
   // Assorted bonuses and penalties
   constexpr Score BishopPawns        = S(  3,  7);
   constexpr Score CorneredBishop     = S( 50, 50);
@@ -306,10 +317,19 @@ namespace {
         {
             // Bonus if piece is on an outpost square or can reach one
             bb = OutpostRanks & ~pe->pawn_attacks_span(Them);
-            if (bb & s)
-                score += Outpost * (Pt == KNIGHT ? 4 : 2)
-                                 * ((attackedBy[Us][PAWN] & s) ? 2 : 1);
 
+            if (bb & s)
+            {
+                if (Pt == KNIGHT)
+                {
+                    int enemy_density = popcount(bb & pos.pieces(Them) & ~pos.pieces(Them, PAWN)
+                                                 & FiveSurrR[rank_of(s)] & FiveSurrF[file_of(s)]);
+                    if (enemy_density > 8) enemy_density = 8;
+                    score += OutpostN[enemy_density][(bool)(attackedBy[Us][PAWN] & s)];
+                }
+                else
+                    score += Outpost * ((attackedBy[Us][PAWN] & s) ? 4 : 2);
+            }
             else if (bb &= b & ~pos.pieces(Us))
                 score += Outpost * (Pt == KNIGHT ? 2 : 1)
                                  * ((attackedBy[Us][PAWN] & bb) ? 2 : 1);
