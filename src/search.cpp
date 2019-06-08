@@ -417,7 +417,7 @@ void Thread::search() {
                   break;
 
               Value previousScore = rootMoves[pvIdx].previousScore;
-              delta += (5*delta) / 16 + 2 + ( abs(previousScore) / 64);
+              delta += (5*delta) / 16 + ( abs(previousScore) / 64);
 
               assert(alpha >= -VALUE_INFINITE && beta <= VALUE_INFINITE);
           }
