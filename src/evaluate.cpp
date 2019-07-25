@@ -78,7 +78,8 @@ namespace {
   constexpr Value SpaceThreshold = Value(12222);
 
   // KingAttackWeights[PieceType] contains king attack weights by piece type
-  constexpr int KingAttackWeights[PIECE_TYPE_NB] = { 0, 0, 77, 55, 44, 10 };
+  constexpr int KingAttackWeights[PIECE_TYPE_NB] = { 0, 0, 77, 63, 44, 10 };
+  constexpr int BishopColorKD = 16;
 
   // Penalties for enemy's safe checks
   constexpr int QueenSafeCheck  = 780;
@@ -287,6 +288,8 @@ namespace {
         {
             kingAttackersCount[Us]++;
             kingAttackersWeight[Us] += KingAttackWeights[Pt];
+            if (Pt == BISHOP && opposite_colors(s, lsb(pos.pieces(Them, KING))))
+                kingAttackersWeight[Us] -= BishopColorKD;
             kingAttacksCount[Us] += popcount(b & attackedBy[Them][KING]);
         }
 
