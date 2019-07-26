@@ -140,6 +140,7 @@ namespace {
   constexpr Score PawnlessFlank      = S( 17, 95);
   constexpr Score RestrictedPiece    = S(  7,  7);
   constexpr Score RookOnPawn         = S( 10, 32);
+  constexpr Score LimitedRook        = S( 15,  5);
   constexpr Score SliderOnQueen      = S( 59, 18);
   constexpr Score ThreatByKing       = S( 24, 89);
   constexpr Score ThreatByPawnPush   = S( 48, 39);
@@ -260,6 +261,7 @@ namespace {
 
     constexpr Color     Them = (Us == WHITE ? BLACK : WHITE);
     constexpr Direction Down = (Us == WHITE ? SOUTH : NORTH);
+    constexpr Direction Up   = (Us == WHITE ? NORTH : SOUTH);
     constexpr Bitboard OutpostRanks = (Us == WHITE ? Rank4BB | Rank5BB | Rank6BB
                                                    : Rank5BB | Rank4BB | Rank3BB);
     const Square* pl = pos.squares<Pt>(Us);
@@ -345,6 +347,15 @@ namespace {
             // Bonus for aligning rook with enemy pawns on the same rank/file
             if (relative_rank(Us, s) >= RANK_5)
                 score += RookOnPawn * popcount(pos.pieces(Them, PAWN) & PseudoAttacks[ROOK][s]);
+
+            // Penalty for being limited by a pawn+bishop structure.
+            if ((file_of(s) == FILE_A
+                 && pos.piece_on(s + Up) == make_piece(Them, PAWN)
+                 && pos.piece_on(s + EAST) == make_piece(Them, BISHOP)) ||
+                (file_of(s) == FILE_H
+                 && pos.piece_on(s + Up) == make_piece(Them, PAWN)
+                 && pos.piece_on(s + WEST) == make_piece(Them, BISHOP)))
+                score -= LimitedRook;
 
             // Bonus for rook on an open or semi-open file
             if (pos.is_on_semiopen_file(Us, s))
