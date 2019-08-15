@@ -299,7 +299,25 @@ namespace {
             // Bonus if piece is on an outpost square or can reach one
             bb = OutpostRanks & attackedBy[Us][PAWN] & ~pe->pawn_attacks_span(Them);
             if (bb & s)
-                score += Outpost * (Pt == KNIGHT ? 4 : 2);
+            {
+                if (Pt == KNIGHT)
+                {
+                    bool threateningBishop = false;
+                    if (DarkSquares & s)
+                    {
+                        if (DarkSquares & pos.pieces(Them, BISHOP))
+                            threateningBishop = true;
+                    }
+                    else
+                    {
+                        if (~DarkSquares & pos.pieces(Them, BISHOP))
+                            threateningBishop = true;
+                    }
+                    score += Outpost * (threateningBishop ? 5 : 3);
+                }
+                else
+                    score += Outpost * 2;
+            }
 
             else if (bb & b & ~pos.pieces(Us))
                 score += Outpost * (Pt == KNIGHT ? 2 : 1);
