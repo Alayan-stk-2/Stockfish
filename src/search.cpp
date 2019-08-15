@@ -63,7 +63,7 @@ namespace {
 
   // Razor and futility margins
   constexpr int RazorMargin = 661;
-  constexpr Value FutilityMargin[10][2] = {
+  Value FutilityMargin[10][2] = {
     { Value(   0), Value(   0) }, // depth 0, unused
     { Value( 375), Value(   0) }, // depth 1
     { Value( 407), Value( 223) }, // depth 2
@@ -75,6 +75,8 @@ namespace {
     { Value(1274), Value( 873) }, // depth 8
     { Value(1516), Value(1142) }, // depth 9
   };
+
+  TUNE(SetRange(-500, 2000), FutilityMargin);
 
   // Reductions lookup table, initialized at startup
   int Reductions[MAX_MOVES]; // [depth or moveNumber]
