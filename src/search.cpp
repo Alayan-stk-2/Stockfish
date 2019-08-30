@@ -68,7 +68,7 @@ namespace {
   }
 
   Value SeePruneMargin[14] = {
-    Value(    0), // depth 0, unused
+    Value(  200), // depth 0, unused
     Value( -199), // depth 1
     Value( -398), // depth 2
     Value( -597), // depth 3
@@ -1070,7 +1070,7 @@ moves_loop: // When in check, search starts from here
                   continue;
           }
           else if (  (!givesCheck || !extension)
-                   && !pos.see_ge(move, (depth / ONE_PLY < 14) ? SeePruneMargin[depth / ONE_PLY] : Value(3000))) // (~20 Elo)
+                   && !pos.see_ge(move, (depth / ONE_PLY < 14) ? SeePruneMargin[depth / ONE_PLY] : Value(-3000))) // (~20 Elo)
                   continue;
       }
 
