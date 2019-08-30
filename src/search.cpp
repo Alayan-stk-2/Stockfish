@@ -67,6 +67,25 @@ namespace {
     return Value(198 * (d / ONE_PLY - improving));
   }
 
+  Value SeePruneMargin[14] = {
+    Value(    0), // depth 0, unused
+    Value( -199), // depth 1
+    Value( -398), // depth 2
+    Value( -597), // depth 3
+    Value( -796), // depth 4
+    Value( -995), // depth 5
+    Value(-1194), // depth 6
+    Value(-1393), // depth 7
+    Value(-1592), // depth 8
+    Value(-1791), // depth 9
+    Value(-1990), // depth 10
+    Value(-2189), // depth 11
+    Value(-2388), // depth 12
+    Value(-2587), // depth 13
+  };
+
+  TUNE(SetRange(-3000, 300), SeePruneMargin);
+
   // Reductions lookup table, initialized at startup
   int Reductions[MAX_MOVES]; // [depth or moveNumber]
 
@@ -1051,7 +1070,7 @@ moves_loop: // When in check, search starts from here
                   continue;
           }
           else if (  (!givesCheck || !extension)
-                   && !pos.see_ge(move, Value(-199) * (depth / ONE_PLY))) // (~20 Elo)
+                   && !pos.see_ge(move, (depth / ONE_PLY < 14) ? SeePruneMargin[depth / ONE_PLY] : Value(3000))) // (~20 Elo)
                   continue;
       }
 
