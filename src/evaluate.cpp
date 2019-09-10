@@ -81,10 +81,10 @@ namespace {
   constexpr int KingAttackWeights[PIECE_TYPE_NB] = { 0, 0, 77, 55, 44, 10 };
 
   // Penalties for enemy's safe checks
-  constexpr int QueenSafeCheck  = 780;
-  constexpr int RookSafeCheck   = 1080;
-  constexpr int BishopSafeCheck = 635;
-  constexpr int KnightSafeCheck = 790;
+  constexpr int QueenSafeCheck  = 912;
+  constexpr int RookSafeCheck   = 1176;
+  constexpr int BishopSafeCheck = 663;
+  constexpr int KnightSafeCheck = 832;
 
 #define S(mg, eg) make_score(mg, eg)
 
@@ -449,17 +449,17 @@ namespace {
     int kingFlankAttacks = popcount(b1) + popcount(b2);
 
     kingDanger +=        kingAttackersCount[Them] * kingAttackersWeight[Them]
-                 +  69 * kingAttacksCount[Them]
-                 + 185 * popcount(kingRing[Us] & weak)
+                 +  64 * kingAttacksCount[Them]
+                 + 196 * popcount(kingRing[Us] & weak)
                  - 100 * bool(attackedBy[Us][KNIGHT] & attackedBy[Us][KING])
-                 -  35 * bool(attackedBy[Us][BISHOP] & attackedBy[Us][KING])
-                 + 148 * popcount(unsafeChecks)
-                 +  98 * popcount(pos.blockers_for_king(Us))
-                 - 873 * !pos.count<QUEEN>(Them)
-                 -   6 * mg_value(score) / 8
+                 -  52 * bool(attackedBy[Us][BISHOP] & attackedBy[Us][KING])
+                 + 154 * popcount(unsafeChecks)
+                 +  52 * popcount(pos.blockers_for_king(Us))
+                 - 953 * !pos.count<QUEEN>(Them)
+                 -  46 * mg_value(score) / 64
                  +       mg_value(mobility[Them] - mobility[Us])
                  +   5 * kingFlankAttacks * kingFlankAttacks / 16
-                 -   7;
+                 +  20;
 
     // Transform the kingDanger units into a Score, and subtract it from the evaluation
     if (kingDanger > 100)
@@ -639,8 +639,7 @@ namespace {
                 // Otherwise assign a smaller bonus if the path to queen is not attacked
                 // and even smaller bonus if it is attacked but block square is not.
                 int k = !unsafeSquares                    ? 35 :
-                        !(unsafeSquares & squaresToQueen) ? 20 :
-                        !(unsafeSquares & blockSq)        ?  9 :
+                        !(unsafeSquares & squaresToQueen) ? 18 :
                                                              0 ;
 
                 // Assign a larger bonus if the block square is defended
@@ -655,7 +654,7 @@ namespace {
         // pawn push to become passed, or have a pawn in front of them.
         if (   !pos.pawn_passed(Us, s + Up)
             || (pos.pieces(PAWN) & (s + Up)))
-            bonus = bonus / 2;
+            bonus = bonus * 73 / 128;
 
         score += bonus - PassedFile * std::min(f, ~f);
     }
@@ -721,12 +720,14 @@ namespace {
                             && (pos.pieces(PAWN) & KingSide);
 
     // Compute the initiative bonus for the attacking side
-    int complexity =   9 * pe->passed_count()
-                    + 11 * pos.count<PAWN>()
-                    +  9 * outflanking
-                    + 18 * pawnsOnBothFlanks
-                    + 49 * !pos.non_pawn_material()
-                    -103 ;
+    int complexity =   35 * pe->passed_count()
+                    +  46 * pos.count<PAWN>()
+                    +  37 * outflanking
+                    +  95 * pawnsOnBothFlanks
+                    + 260 * !pos.non_pawn_material()
+                    - 366;
+
+    complexity = complexity/4;
 
     // Now apply the bonus: note that we find the attacking side by extracting
     // the sign of the endgame value, and that we carefully cap the bonus so
