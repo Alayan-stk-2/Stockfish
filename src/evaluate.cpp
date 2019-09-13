@@ -99,7 +99,7 @@ namespace {
   int KRP_KDD = 98;
   int KRP_KDE = 96;
   int KRP_KDF = 40;
-  int KRP_KDG = 7;
+  int KRP_KDG = 880;
 
 #define S(mg, eg) make_score(mg, eg)
 
