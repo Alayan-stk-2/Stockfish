@@ -82,9 +82,24 @@ namespace {
 
   // Penalties for enemy's safe checks
   constexpr int QueenSafeCheck  = 780;
-  constexpr int RookSafeCheck   = 1080;
+  int RookSafeCheck   = 1080;
   constexpr int BishopSafeCheck = 635;
   constexpr int KnightSafeCheck = 790;
+
+  int KRP_RookSafeCheck   = 1080;
+
+  int KRP_PPA = 35;
+  int KRP_PPB = 20;
+  int KRP_PPC = 9;
+  int KRP_PPD = 5;
+
+  int KRP_KDA = 69;
+  int KRP_KDB = 185;
+  int KRP_KDC = 148;
+  int KRP_KDD = 98;
+  int KRP_KDE = 96;
+  int KRP_KDF = 40;
+  int KRP_KDG = 7;
 
 #define S(mg, eg) make_score(mg, eg)
 
@@ -108,7 +123,11 @@ namespace {
 
   // RookOnFile[semiopen/open] contains bonuses for each rook when there is
   // no (friendly) pawn on the rook file.
-  constexpr Score RookOnFile[] = { S(18, 7), S(44, 20) };
+  Score RookOnFile[] = { S(18, 7), S(44, 20) };
+
+  // KRP_RookOnFile[semiopen/open] contains bonuses for each rook when there is
+  // no (friendly) pawn on the rook file.
+  Score KRP_RookOnFile[] = { S(18, 7), S(44, 20) };
 
   // ThreatByMinor/ByRook[attacked PieceType] contains bonuses according to
   // which piece type attacks which one. Attacks on lesser pieces which are
@@ -122,30 +141,42 @@ namespace {
   };
 
   // PassedRank[Rank] contains a bonus according to the rank of a passed pawn
-  constexpr Score PassedRank[RANK_NB] = {
+  Score PassedRank[RANK_NB] = {
     S(0, 0), S(10, 28), S(17, 33), S(15, 41), S(62, 72), S(168, 177), S(276, 260)
   };
+
+  // PassedRank[Rank] contains a bonus according to the rank of a passed pawn
+  Score KRP_PassedRank[RANK_NB] = {
+    S(0, 0), S(10, 28), S(17, 33), S(15, 41), S(62, 72), S(168, 177), S(276, 260)
+  };
+
 
   // Assorted bonuses and penalties
   constexpr Score BishopPawns        = S(  3,  7);
   constexpr Score CorneredBishop     = S( 50, 50);
   constexpr Score FlankAttacks       = S(  8,  0);
-  constexpr Score Hanging            = S( 69, 36);
+  Score Hanging            = S( 69, 36);
+  Score KRP_Hanging            = S( 69, 36);
   constexpr Score KingProtector      = S(  7,  8);
   constexpr Score KnightOnQueen      = S( 16, 12);
   constexpr Score LongDiagonalBishop = S( 45,  0);
   constexpr Score MinorBehindPawn    = S( 18,  3);
   constexpr Score Outpost            = S( 18,  6);
   constexpr Score PassedFile         = S( 11,  8);
-  constexpr Score PawnlessFlank      = S( 17, 95);
+  Score PawnlessFlank      = S( 17, 95);
+  Score KRP_PawnlessFlank      = S( 17, 95);
   constexpr Score RestrictedPiece    = S(  7,  7);
-  constexpr Score RookOnPawn         = S( 10, 32);
+  Score RookOnPawn         = S( 10, 32);
+  Score KRP_RookOnPawn         = S( 10, 32);
   constexpr Score RookOnQueenFile    = S( 11,  4);
   constexpr Score SliderOnQueen      = S( 59, 18);
-  constexpr Score ThreatByKing       = S( 24, 89);
-  constexpr Score ThreatByPawnPush   = S( 48, 39);
+  Score ThreatByKing       = S( 24, 89);
+  Score KRP_ThreatByKing       = S( 24, 89);
+  Score ThreatByPawnPush   = S( 48, 39);
+  Score KRP_ThreatByPawnPush   = S( 48, 39);
   constexpr Score ThreatByRank       = S( 13,  0);
-  constexpr Score ThreatBySafePawn   = S(173, 94);
+  Score ThreatBySafePawn   = S(173, 94);
+  Score KRP_ThreatBySafePawn   = S(173, 94);
   constexpr Score TrappedRook        = S( 47,  4);
   constexpr Score WeakQueen          = S( 49, 15);
 
@@ -206,6 +237,9 @@ namespace {
     // a white knight on g5 and black's king is on g8, this white knight adds 2
     // to kingAttacksCount[WHITE].
     int kingAttacksCount[COLOR_NB];
+
+    // Whether this is a rook and pawns position or not.
+    bool isKRP;
   };
 
 
@@ -252,6 +286,12 @@ namespace {
 
     // Remove from kingRing[] the squares defended by two pawns
     kingRing[Us] &= ~dblAttackByPawn;
+
+    if (   pos.count<BISHOP>() + pos.count<KNIGHT>() + pos.count<QUEEN>() == 0
+        && pos.count<ROOK>() >= 1)
+        isKRP = true;
+    else
+        isKRP = false;
   }
 
 
@@ -345,7 +385,7 @@ namespace {
         {
             // Bonus for aligning rook with enemy pawns on the same rank/file
             if (relative_rank(Us, s) >= RANK_5)
-                score += RookOnPawn * popcount(pos.pieces(Them, PAWN) & PseudoAttacks[ROOK][s]);
+                score += (isKRP ? KRP_RookOnPawn : RookOnPawn) * popcount(pos.pieces(Them, PAWN) & PseudoAttacks[ROOK][s]);
 
             // Bonus for rook on same file as their queen
             if (file_bb(s) & pos.pieces(Them, QUEEN))
@@ -353,7 +393,8 @@ namespace {
 
             // Bonus for rook on an open or semi-open file
             if (pos.is_on_semiopen_file(Us, s))
-                score += RookOnFile[bool(pos.is_on_semiopen_file(Them, s))];
+                score += (isKRP ? KRP_RookOnFile[bool(pos.is_on_semiopen_file(Them, s))] :
+                                  RookOnFile[bool(pos.is_on_semiopen_file(Them, s))]);
 
             // Penalty when trapped by the king, even more if the king cannot castle
             else if (mob <= 3)
@@ -411,7 +452,7 @@ namespace {
     rookChecks = b1 & safe & attackedBy[Them][ROOK];
 
     if (rookChecks)
-        kingDanger += RookSafeCheck;
+        kingDanger += isKRP ? KRP_RookSafeCheck : RookSafeCheck;
     else
         unsafeChecks |= b1 & attackedBy[Them][ROOK];
 
@@ -453,18 +494,33 @@ namespace {
 
     int kingFlankAttacks = popcount(b1) + popcount(b2);
 
-    kingDanger +=        kingAttackersCount[Them] * kingAttackersWeight[Them]
-                 +  69 * kingAttacksCount[Them]
-                 + 185 * popcount(kingRing[Us] & weak)
-                 - 100 * bool(attackedBy[Us][KNIGHT] & attackedBy[Us][KING])
-                 -  35 * bool(attackedBy[Us][BISHOP] & attackedBy[Us][KING])
-                 + 148 * popcount(unsafeChecks)
-                 +  98 * popcount(pos.blockers_for_king(Us))
-                 - 873 * !pos.count<QUEEN>(Them)
-                 -   6 * mg_value(score) / 8
-                 +       mg_value(mobility[Them] - mobility[Us])
-                 +   5 * kingFlankAttacks * kingFlankAttacks / 16
-                 -   7;
+    if (isKRP)
+    {
+        kingDanger +=        kingAttackersCount[Them] * kingAttackersWeight[Them]
+                     + KRP_KDA * kingAttacksCount[Them]
+                     + KRP_KDB * popcount(kingRing[Us] & weak)
+                     + KRP_KDC * popcount(unsafeChecks)
+                     + KRP_KDD * popcount(pos.blockers_for_king(Us))
+                     - KRP_KDE * mg_value(score) / 128
+                     +       mg_value(mobility[Them] - mobility[Us])
+                     + KRP_KDF * kingFlankAttacks * kingFlankAttacks / 128
+                     - KRP_KDG;
+    }
+    else
+    {
+        kingDanger +=        kingAttackersCount[Them] * kingAttackersWeight[Them]
+                     +  69 * kingAttacksCount[Them]
+                     + 185 * popcount(kingRing[Us] & weak)
+                     - 100 * bool(attackedBy[Us][KNIGHT] & attackedBy[Us][KING])
+                     -  35 * bool(attackedBy[Us][BISHOP] & attackedBy[Us][KING])
+                     + 148 * popcount(unsafeChecks)
+                     +  98 * popcount(pos.blockers_for_king(Us))
+                     - 873 * !pos.count<QUEEN>(Them)
+                     -   6 * mg_value(score) / 8
+                     +       mg_value(mobility[Them] - mobility[Us])
+                     +   5 * kingFlankAttacks * kingFlankAttacks / 16
+                     -   7;
+    }
 
     // Transform the kingDanger units into a Score, and subtract it from the evaluation
     if (kingDanger > 100)
@@ -472,7 +528,7 @@ namespace {
 
     // Penalty when our king is on a pawnless flank
     if (!(pos.pieces(PAWN) & KingFlank[file_of(ksq)]))
-        score -= PawnlessFlank;
+        score -= (isKRP ? KRP_PawnlessFlank : PawnlessFlank);
 
     // Penalty if king flank is under attack, potentially moving toward the king
     score -= FlankAttacks * kingFlankAttacks;
@@ -532,11 +588,11 @@ namespace {
         }
 
         if (weak & attackedBy[Us][KING])
-            score += ThreatByKing;
+            score += (isKRP ? KRP_ThreatByKing : ThreatByKing);
 
         b =  ~attackedBy[Them][ALL_PIECES]
            | (nonPawnEnemies & attackedBy2[Us]);
-        score += Hanging * popcount(weak & b);
+        score += (isKRP ? KRP_Hanging : Hanging) * popcount(weak & b);
     }
 
     // Bonus for restricting their piece moves
@@ -552,7 +608,7 @@ namespace {
     // Bonus for attacking enemy pieces with our relatively safe pawns
     b = pos.pieces(Us, PAWN) & safe;
     b = pawn_attacks_bb<Us>(b) & nonPawnEnemies;
-    score += ThreatBySafePawn * popcount(b);
+    score += (isKRP ? KRP_ThreatBySafePawn : ThreatBySafePawn) * popcount(b);
 
     // Find squares where our pawns can push on the next move
     b  = shift<Up>(pos.pieces(Us, PAWN)) & ~pos.pieces();
@@ -563,7 +619,7 @@ namespace {
 
     // Bonus for safe pawn threats on the next move
     b = pawn_attacks_bb<Us>(b) & nonPawnEnemies;
-    score += ThreatByPawnPush * popcount(b);
+    score += (isKRP ? KRP_ThreatByPawnPush : ThreatByPawnPush) * popcount(b);
 
     // Bonus for threats on the next moves against enemy queen
     if (pos.count<QUEEN>(Them) == 1)
@@ -614,7 +670,7 @@ namespace {
         int r = relative_rank(Us, s);
         File f = file_of(s);
 
-        Score bonus = PassedRank[r];
+        Score bonus = (isKRP ? KRP_PassedRank[r] : PassedRank[r]);
 
         if (r > RANK_3)
         {
@@ -643,14 +699,14 @@ namespace {
                 // If there are no enemy attacks on passed pawn span, assign a big bonus.
                 // Otherwise assign a smaller bonus if the path to queen is not attacked
                 // and even smaller bonus if it is attacked but block square is not.
-                int k = !unsafeSquares                    ? 35 :
-                        !(unsafeSquares & squaresToQueen) ? 20 :
-                        !(unsafeSquares & blockSq)        ?  9 :
+                int k = !unsafeSquares                    ? (isKRP ? KRP_PPA : 35) :
+                        !(unsafeSquares & squaresToQueen) ? (isKRP ? KRP_PPB : 20) :
+                        !(unsafeSquares & blockSq)        ? (isKRP ? KRP_PPC :  9) :
                                                              0 ;
 
                 // Assign a larger bonus if the block square is defended
                 if ((pos.pieces(Us) & bb) || (attackedBy[Us][ALL_PIECES] & blockSq))
-                    k += 5;
+                    k += (isKRP ? KRP_PPD : 5);
 
                 bonus += make_score(k * w, k * w);
             }
