@@ -88,10 +88,14 @@ namespace {
 
   int KRP_RookSafeCheck   = 1080;
 
+TUNE(SetRange(600, 1600), KRP_RookSafeCheck, RookSafeCheck);
+
   int KRP_PPA = 35;
   int KRP_PPB = 20;
   int KRP_PPC = 9;
   int KRP_PPD = 5;
+
+TUNE(SetRange(0, 80), KRP_PPA, KRP_PPB, KRP_PPC, KRP_PPD);
 
   int KRP_KDA = 69;
   int KRP_KDB = 185;
@@ -100,6 +104,10 @@ namespace {
   int KRP_KDE = 96;
   int KRP_KDF = 40;
   int KRP_KDG = 880;
+
+TUNE(SetRange(0, 250), KRP_KDA, KRP_KDB, KRP_KDC, KRP_KDD, KRP_KDE, KRP_KDF);
+
+TUNE(SetRange(600, 1200), KRP_KDG);
 
 #define S(mg, eg) make_score(mg, eg)
 
@@ -129,6 +137,8 @@ namespace {
   // no (friendly) pawn on the rook file.
   Score KRP_RookOnFile[] = { S(18, 7), S(44, 20) };
 
+TUNE(SetRange(-10, 90), KRP_RookOnFile);
+
   // ThreatByMinor/ByRook[attacked PieceType] contains bonuses according to
   // which piece type attacks which one. Attacks on lesser pieces which are
   // pawn-defended are not considered.
@@ -149,6 +159,8 @@ namespace {
   Score KRP_PassedRank[RANK_NB] = {
     S(0, 0), S(10, 28), S(17, 33), S(15, 41), S(62, 72), S(168, 177), S(276, 260)
   };
+
+TUNE(SetRange(0, 350), KRP_PassedRank, PassedRank);
 
 
   // Assorted bonuses and penalties
@@ -179,6 +191,10 @@ namespace {
   Score KRP_ThreatBySafePawn   = S(173, 94);
   constexpr Score TrappedRook        = S( 47,  4);
   constexpr Score WeakQueen          = S( 49, 15);
+
+TUNE(SetRange(0, 140), KRP_Hanging, Hanging, KRP_PawnlessFlank, PawnlessFlank, KRP_ThreatByKing, ThreatByKing, KRP_ThreatByPawnPush, ThreatByPawnPush);
+TUNE(SetRange(-20, 60), KRP_RookOnPawn, RookOnPawn);
+TUNE(SetRange(0, 250), KRP_ThreatBySafePawn, ThreatBySafePawn);
 
 #undef S
 
