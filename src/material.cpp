@@ -54,12 +54,13 @@ namespace {
 
   // Endgame evaluation and scaling functions are accessed directly and not through
   // the function maps because they correspond to more than one material hash key.
-  Endgame<KXK>    EvaluateKXK[] = { Endgame<KXK>(WHITE),    Endgame<KXK>(BLACK) };
+  Endgame<KXK>      EvaluateKXK[]   = { Endgame<KXK>(WHITE),    Endgame<KXK>(BLACK) };
 
-  Endgame<KBPsK>  ScaleKBPsK[]  = { Endgame<KBPsK>(WHITE),  Endgame<KBPsK>(BLACK) };
-  Endgame<KQKRPs> ScaleKQKRPs[] = { Endgame<KQKRPs>(WHITE), Endgame<KQKRPs>(BLACK) };
-  Endgame<KPsK>   ScaleKPsK[]   = { Endgame<KPsK>(WHITE),   Endgame<KPsK>(BLACK) };
-  Endgame<KPKP>   ScaleKPKP[]   = { Endgame<KPKP>(WHITE),   Endgame<KPKP>(BLACK) };
+  Endgame<KBPsK>    ScaleKBPsK[]    = { Endgame<KBPsK>(WHITE),  Endgame<KBPsK>(BLACK) };
+  Endgame<KQKRPs>   ScaleKQKRPs[]   = { Endgame<KQKRPs>(WHITE), Endgame<KQKRPs>(BLACK) };
+  Endgame<KPsK>     ScaleKPsK[]     = { Endgame<KPsK>(WHITE),   Endgame<KPsK>(BLACK) };
+  Endgame<KPKP>     ScaleKPKP[]     = { Endgame<KPKP>(WHITE),   Endgame<KPKP>(BLACK) };
+  Endgame<KBNNKRPs> ScaleKBNNKRPs[] = { Endgame<KBNNKRPs>(WHITE),  Endgame<KBNNKRPs>(BLACK) };
 
   // Helper used to detect a given material distribution
   bool is_KXK(const Position& pos, Color us) {
@@ -77,6 +78,13 @@ namespace {
           && pos.non_pawn_material(us) == QueenValueMg
           && pos.count<ROOK>(~us) == 1
           && pos.count<PAWN>(~us) >= 1;
+  }
+
+  bool is_KBNNKRPs(const Position& pos, Color us) {
+    return  !pos.count<PAWN>(us)
+          && pos.non_pawn_material(us) == (BishopValueMg + 2 * KnightValueMg)
+          && pos.non_pawn_material(~us) == RookValueMg
+          && pos.count<PAWN>(~us) <= 2;
   }
 
   /// imbalance() calculates the imbalance by comparing the piece count of each
@@ -167,6 +175,9 @@ Entry* probe(const Position& pos) {
 
     else if (is_KQKRPs(pos, c))
         e->scalingFunction[c] = &ScaleKQKRPs[c];
+
+    else if (is_KBNNKRPs(pos, c))
+        e->scalingFunction[c] = &ScaleKBNNKRPs[c];
   }
 
   if (npm_w + npm_b == VALUE_ZERO && pos.pieces(PAWN)) // Only pawns on the board

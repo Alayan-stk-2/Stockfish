@@ -646,6 +646,13 @@ ScaleFactor Endgame<KBPKB>::operator()(const Position& pos) const {
   return SCALE_FACTOR_NONE;
 }
 
+// Two bare knights can't mate a lone king, which means the weak side has many
+// opportunities to push its pawns and harass the bishop with the rook, making
+// this material imbalance very drawish.
+template<>
+ScaleFactor Endgame<KBNNKRPs>::operator()(const Position& pos) const {
+  return SCALE_FACTOR_DRAWISH;
+}
 
 /// KBPP vs KB. It detects a few basic draws with opposite-colored bishops
 template<>
