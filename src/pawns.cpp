@@ -41,6 +41,18 @@ namespace {
 
   // Connected pawn bonus
   constexpr int Connected[RANK_NB] = { 0, 7, 8, 12, 29, 48, 86 };
+  // Supported pawn bonus [File of supported] [File of supporter]
+  constexpr int Supported[FILE_NB][FILE_NB] = {
+    {   0, 336, 336, 336, 336, 336, 336, 336 },
+    { 336,   0, 336, 336, 336, 336, 336, 336 },
+    { 336, 336,   0, 336, 336, 336, 336, 336 },
+    { 336, 336, 336,   0, 336, 336, 336, 336 },
+    { 336, 336, 336, 336,   0, 336, 336, 336 },
+    { 336, 336, 336, 336, 336,   0, 336, 336 },
+    { 336, 336, 336, 336, 336, 336,   0, 336 },
+    { 336, 336, 336, 336, 336, 336, 336,   0 },
+  };
+
 
   // Strength of pawn shelter for our king by [distance from edge][rank].
   // RANK_1 = 0 is used for files where we have no pawn, or pawn is behind our king.
@@ -130,8 +142,18 @@ namespace {
         // Score this pawn
         if (support | phalanx)
         {
-            int v =  Connected[r] * (2 + bool(phalanx) - opposed)
-                   + 21 * popcount(support);
+            int v =  0;
+
+            Bitboard b = support;
+            while(b)
+            {
+                Square ss = pop_lsb(&b);
+                v += Supported[file_of(s)][file_of(ss)];
+            }
+
+            v = v/16;
+
+            v += Connected[r] * (2 + bool(phalanx) - opposed);
 
             score += make_score(v, v * (r - 2) / 4);
         }
