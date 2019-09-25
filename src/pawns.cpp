@@ -42,7 +42,7 @@ namespace {
   // Connected pawn bonus
   constexpr int Connected[RANK_NB] = { 0, 7, 8, 12, 29, 48, 86 };
   // Supported pawn bonus [File of supported] [File of supporter]
-  constexpr int Supported[FILE_NB][FILE_NB] = {
+  int Supported[FILE_NB][FILE_NB] = {
     {   0, 336, 336, 336, 336, 336, 336, 336 },
     { 336,   0, 336, 336, 336, 336, 336, 336 },
     { 336, 336,   0, 336, 336, 336, 336, 336 },
@@ -53,6 +53,7 @@ namespace {
     { 336, 336, 336, 336, 336, 336, 336,   0 },
   };
 
+  TUNE(SetRange(0, 800), Supported);
 
   // Strength of pawn shelter for our king by [distance from edge][rank].
   // RANK_1 = 0 is used for files where we have no pawn, or pawn is behind our king.
