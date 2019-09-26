@@ -41,16 +41,18 @@ namespace {
 
   // Connected pawn bonus
   constexpr int Connected[RANK_NB] = { 0, 7, 8, 12, 29, 48, 86 };
-  // Supported pawn bonus [File of supported] [File of supporter]
-  int Supported[FILE_NB][FILE_NB] = {
-    {   0, 336,   0,   0,   0,   0,   0,   0 },
-    { 336,   0, 336,   0,   0,   0,   0,   0 },
-    {   0, 336,   0, 336,   0,   0,   0,   0 },
-    {   0,   0, 336,   0, 336,   0,   0,   0 },
-    {   0,   0,   0, 336,   0, 336,   0,   0 },
-    {   0,   0,   0,   0, 336,   0, 336,   0 },
-    {   0,   0,   0,   0,   0, 336,   0, 336 },
-    {   0,   0,   0,   0,   0,   0, 336,   0 },
+  // Supported pawn bonus [File of supported] [4*lever+2*supported+1*right side]
+  // Lever/Supported/Right
+  //  NNN, NNY, NYN, NYY, YNN, YNY, YYN, YYY
+  int Supported[FILE_NB][8] = {
+    {   0, 336,   0, 336,   0, 336,   0, 336},
+    { 336, 336, 336, 336, 336, 336, 336, 336},
+    { 336, 336, 336, 336, 336, 336, 336, 336},
+    { 336, 336, 336, 336, 336, 336, 336, 336},
+    { 336, 336, 336, 336, 336, 336, 336, 336},
+    { 336, 336, 336, 336, 336, 336, 336, 336},
+    { 336, 336, 336, 336, 336, 336, 336, 336},
+    { 336,   0, 336,   0, 336,   0, 336,   0}
   };
 
   TUNE(SetRange(0, 800), Supported);
@@ -149,7 +151,22 @@ namespace {
             while(b)
             {
                 Square ss = pop_lsb(&b);
-                v += Supported[file_of(s)][file_of(ss)];
+
+                int t = (file_of(ss) > file_of(s)) ? 1 : 0;
+
+                // Is the supporter pawn also supported ?
+                Bitboard bb = ourPawns & adjacent_files_bb(ss) & rank_bb(ss - Up);
+
+                if (bb)
+                    t += 2;
+
+                // Is the supporter pawn a lever ?
+                bb = theirPawns & PawnAttacks[Us][ss];
+
+                if (bb)
+                    t += 4;
+
+                v += Supported[file_of(s)][t];
             }
 
             v = v/16;
