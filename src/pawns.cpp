@@ -45,17 +45,17 @@ namespace {
   // Lever/Supported/Right
   //  NNN, NNY, NYN, NYY, YNN, YNY, YYN, YYY
   int Supported[FILE_NB][8] = {
-    {   0, 336,   0, 336,   0, 336,   0, 336},
-    { 336, 336, 336, 336,   0, 336,   0, 336},
-    { 336, 336, 336, 336, 336, 336, 336, 336},
-    { 336, 336, 336, 336, 336, 336, 336, 336},
-    { 336, 336, 336, 336, 336, 336, 336, 336},
-    { 336, 336, 336, 336, 336, 336, 336, 336},
-    { 336, 336, 336, 336, 336,   0, 336,   0},
-    { 336,   0, 336,   0, 336,   0, 336,   0}
+    {   0, 166,   0, 148,   0, 150,   0, 169},
+    { 172, 157, 159, 186,   0, 142,   0, 162},
+    { 159, 160, 132, 162, 187, 155, 182, 188},
+    { 165, 187, 174, 165, 183, 176, 151, 195},
+    { 163, 140, 170, 184, 180, 152, 192, 178},
+    { 141, 147, 148, 164, 186, 168, 167, 171},
+    { 191, 172, 178, 179, 165,   0, 162,   0},
+    { 171,   0, 136,   0, 194,   0, 160,   0}
   };
 
-  TUNE(SetRange(0, 800), Supported);
+  TUNE(SetRange(0, 500), Supported);
 
   // Strength of pawn shelter for our king by [distance from edge][rank].
   // RANK_1 = 0 is used for files where we have no pawn, or pawn is behind our king.
@@ -169,7 +169,7 @@ namespace {
                 v += Supported[file_of(s)][t];
             }
 
-            v = v/16;
+            v = v/8;
 
             v += Connected[r] * (2 + bool(phalanx) - opposed);
 
