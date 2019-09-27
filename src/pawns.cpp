@@ -41,18 +41,19 @@ namespace {
 
   // Connected pawn bonus
   constexpr int Connected[RANK_NB] = { 0, 7, 8, 12, 29, 48, 86 };
-  // Supported pawn bonus [File of supported] [File of supporter]
-  constexpr int Supported[FILE_NB][FILE_NB] = {
-    {   0, 336, 336, 336, 336, 336, 336, 336 },
-    { 336,   0, 336, 336, 336, 336, 336, 336 },
-    { 336, 336,   0, 336, 336, 336, 336, 336 },
-    { 336, 336, 336,   0, 336, 336, 336, 336 },
-    { 336, 336, 336, 336,   0, 336, 336, 336 },
-    { 336, 336, 336, 336, 336,   0, 336, 336 },
-    { 336, 336, 336, 336, 336, 336,   0, 336 },
-    { 336, 336, 336, 336, 336, 336, 336,   0 },
+  // Supported pawn bonus [File of supported] [4*lever+2*supported+1*right side]
+  // Lever/Supported/Right
+  //  NNN, NNY, NYN, NYY, YNN, YNY, YYN, YYY
+  int Supported[FILE_NB][8] = {
+    {   0, 139,   0, 143,   0, 144,   0, 209},
+    { 180, 160, 184, 192,   0, 130,   0, 157},
+    { 172, 175, 151, 181, 167, 185, 161, 201},
+    { 155, 169, 175, 145, 187, 172, 139, 184},
+    { 171, 146, 184, 185, 186, 165, 170, 185},
+    { 151, 143, 180, 168, 234, 173, 173, 194},
+    { 201, 140, 195, 202, 158,   0, 159,   0},
+    { 178,   0, 142,   0, 212,   0, 157,   0}
   };
-
 
   // Strength of pawn shelter for our king by [distance from edge][rank].
   // RANK_1 = 0 is used for files where we have no pawn, or pawn is behind our king.
@@ -148,10 +149,25 @@ namespace {
             while(b)
             {
                 Square ss = pop_lsb(&b);
-                v += Supported[file_of(s)][file_of(ss)];
+
+                int t = (file_of(ss) > file_of(s)) ? 1 : 0;
+
+                // Is the supporter pawn also supported ?
+                Bitboard bb = ourPawns & adjacent_files_bb(ss) & rank_bb(ss - Up);
+
+                if (bb)
+                    t += 2;
+
+                // Is the supporter pawn a lever ?
+                bb = theirPawns & PawnAttacks[Us][ss];
+
+                if (bb)
+                    t += 4;
+
+                v += Supported[file_of(s)][t];
             }
 
-            v = v/16;
+            v = v/8;
 
             v += Connected[r] * (2 + bool(phalanx) - opposed);
 
