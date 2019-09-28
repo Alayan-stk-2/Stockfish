@@ -260,8 +260,11 @@ namespace {
 
     constexpr Color     Them = (Us == WHITE ? BLACK : WHITE);
     constexpr Direction Down = (Us == WHITE ? SOUTH : NORTH);
+    constexpr Direction Up   = (Us == WHITE ? NORTH : SOUTH);
     constexpr Bitboard OutpostRanks = (Us == WHITE ? Rank4BB | Rank5BB | Rank6BB
                                                    : Rank5BB | Rank4BB | Rank3BB);
+    constexpr Bitboard TrappedRanks = (Us == WHITE ? Rank1BB | Rank2BB
+                                                   : Rank7BB | Rank8BB);
     const Square* pl = pos.squares<Pt>(Us);
 
     Bitboard b, bb;
@@ -351,11 +354,16 @@ namespace {
                 score += RookOnFile[pos.is_on_semiopen_file(Them, s)];
 
             // Penalty when trapped by the king, even more if the king cannot castle
-            else if (mob <= 3)
+            else if (mob <= 3 && (TrappedRanks & s))
             {
                 File kf = file_of(pos.square<KING>(Us));
                 if ((kf < FILE_E) == (file_of(s) < kf))
                     score -= TrappedRook * (1 + !pos.castling_rights(Us));
+
+                if (   !pos.empty(pos.square<KING>(Us) + Up)
+                    && (pos.pieces(Us, PAWN) & (s + Up) || pos.pieces(Us, PAWN) & (s + Up + Up)) 
+                    && (pos.pieces(Them, PAWN) & (s + Up + Up) || pos.pieces(Them, PAWN) & (s + Up + Up + Up)))
+                    score -= make_score(30, 20);
             }
         }
 
