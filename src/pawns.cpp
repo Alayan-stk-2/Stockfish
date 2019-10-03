@@ -175,11 +175,8 @@ namespace {
             {
                 Square ss = pop_lsb(&support);
 
-                int t = 0;
-                if (support) // the pawn is supported twice
-                    t = 2;
-                else if (file_of(ss) > file_of(s))
-                    t = 1;
+                int t = (support)                 ? 2 :
+                        (file_of(ss) > file_of(s)) ? 1 : 0;
 
                 int mg = SupportedMg[file_of(s)][t] * SupportedRankMg[r] / 1024;
                 int eg = SupportedEg[file_of(s)][t] * SupportedRankEg[r] / 1024;
