@@ -143,25 +143,24 @@ namespace {
         // Score this pawn
         if (support | phalanx)
         {
+            if (!support)
+                score -=   Doubled * doubled
+                         + WeakLever * more_than_one(lever);
+
             int v =  0;
 
-            Bitboard b = support;
-            while(b)
+            while(support)
             {
-                Square ss = pop_lsb(&b);
+                Square ss = pop_lsb(&support);
 
                 int t = (file_of(ss) > file_of(s)) ? 1 : 0;
 
                 // Is the supporter pawn also supported ?
-                Bitboard bb = ourPawns & adjacent_files_bb(ss) & rank_bb(ss - Up);
-
-                if (bb)
+                if (ourPawns & PawnAttacks[Them][ss])
                     t += 2;
 
                 // Is the supporter pawn a lever ?
-                bb = theirPawns & PawnAttacks[Us][ss];
-
-                if (bb)
+                if (theirPawns & PawnAttacks[Us][ss])
                     t += 4;
 
                 v += Supported[file_of(s)][t];
@@ -179,10 +178,6 @@ namespace {
 
         else if (backward)
             score -= Backward + WeakUnopposed * !opposed;
-
-        if (!support)
-            score -=   Doubled * doubled
-                     + WeakLever * more_than_one(lever);
     }
 
     return score;
