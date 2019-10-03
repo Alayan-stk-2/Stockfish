@@ -64,8 +64,12 @@ namespace {
     { 169,   0,   0}
   };
 
+TUNE(SetRange(0, 500), SupportedMg, SupportedEg);
+
    int SupportedRankMg[RANK_NB] = { 0,  0, 128, 128, 128, 128, 128 };
    int SupportedRankEg[RANK_NB] = { 0,  0,  32,  64,  96, 128, 160 };
+
+TUNE(SetRange(0, 250), SupportedRankMg, SupportedRankEg);
 
   // Strength of pawn shelter for our king by [distance from edge][rank].
   // RANK_1 = 0 is used for files where we have no pawn, or pawn is behind our king.
