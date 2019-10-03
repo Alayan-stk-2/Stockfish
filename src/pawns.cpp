@@ -84,10 +84,10 @@ namespace {
     constexpr Color     Them = (Us == WHITE ? BLACK : WHITE);
     constexpr Direction Up   = (Us == WHITE ? NORTH : SOUTH);
 
-    Bitboard neighbours, stoppers, support, phalanx;
+    Bitboard neighbours, stoppers, support, phalanx, opposed;
     Bitboard lever, leverPush;
     Square s;
-    bool opposed, backward, passed, doubled;
+    bool backward, passed, doubled;
     Score score = SCORE_ZERO;
     const Square* pl = pos.squares<PAWN>(Us);
 
@@ -107,8 +107,6 @@ namespace {
 
         Rank r = relative_rank(Us, s);
 
-        e->pawnAttacksSpan[Us] |= pawn_attack_span(Us, s);
-
         // Flag the pawn
         opposed    = theirPawns & forward_file_bb(Us, s);
         stoppers   = theirPawns & passed_pawn_span(Us, s);
@@ -124,6 +122,17 @@ namespace {
         // pawns will be excluded when the pawn is scored.
         backward =  !(neighbours & forward_ranks_bb(Them, s))
                   && (stoppers & (leverPush | (s + Up)));
+
+        // Span of backward pawns and span behind opposing pawns are not included
+        // in the pawnAttacksSpan bitboard.
+        if (!backward || phalanx)
+        {
+            if (opposed)
+                e->pawnAttacksSpan[Us] |=  pawn_attack_span(Us, s) &
+                                          ~pawn_attack_span(Us, frontmost_sq(Them, opposed));
+            else
+                e->pawnAttacksSpan[Us] |= pawn_attack_span(Us, s);
+        }
 
         // A pawn is passed if one of the three following conditions is true:
         // (a) there is no stoppers except some levers
@@ -168,16 +177,18 @@ namespace {
 
             v = v/8;
 
-            v += Connected[r] * (2 + bool(phalanx) - opposed);
+            v += Connected[r] * (2 + bool(phalanx) - bool(opposed));
 
             score += make_score(v, v * (r - 2) / 4);
         }
 
         else if (!neighbours)
-            score -= Isolated + WeakUnopposed * !opposed;
+            score -=   Isolated
+                     + WeakUnopposed * !opposed;
 
         else if (backward)
-            score -= Backward + WeakUnopposed * !opposed;
+            score -=   Backward
+                     + WeakUnopposed * !opposed;
     }
 
     return score;
