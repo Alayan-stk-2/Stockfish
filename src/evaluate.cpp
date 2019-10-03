@@ -752,6 +752,12 @@ namespace {
         if (   pos.opposite_bishops()
             && pos.non_pawn_material() == 2 * BishopValueMg)
             sf = 16 + 4 * pe->passed_count();
+        // A lone queen can't capture any defended piece, making some endgame conversions hard or impossible
+        else if (   pos.non_pawn_material(strongSide) == QueenValueMg
+                 && pos.count<PAWN>(strongSide) == 0
+                 && (   pos.non_pawn_material(~strongSide) >= 2 * KnightValueMg
+                     || (pos.count<PAWN>(~strongSide) >= 1 && pos.non_pawn_material(~strongSide) >= RookValueMg)))
+            sf = 16;
         else
             sf = std::min(sf, 36 + (pos.opposite_bishops() ? 2 : 7) * pos.count<PAWN>(strongSide));
 
