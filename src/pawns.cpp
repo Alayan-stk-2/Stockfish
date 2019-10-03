@@ -41,19 +41,31 @@ namespace {
 
   // Connected pawn bonus
   constexpr int Connected[RANK_NB] = { 0, 7, 8, 12, 29, 48, 86 };
-  // Supported pawn bonus [File of supported] [4*lever+2*supported+1*right side]
-  // Lever/Supported/Right
-  //  NNN, NNY, NYN, NYY, YNN, YNY, YYN, YYY
-  int Supported[FILE_NB][8] = {
-    {   0, 139,   0, 143,   0, 144,   0, 209},
-    { 180, 160, 184, 192,   0, 130,   0, 157},
-    { 172, 175, 151, 181, 167, 185, 161, 201},
-    { 155, 169, 175, 145, 187, 172, 139, 184},
-    { 171, 146, 184, 185, 186, 165, 170, 185},
-    { 151, 143, 180, 168, 234, 173, 173, 194},
-    { 201, 140, 195, 202, 158,   0, 159,   0},
-    { 178,   0, 142,   0, 212,   0, 157,   0}
+
+  // Supported pawn bonus [File of supported][0-left/1-right/2-both)]
+  int SupportedMg[FILE_NB][3] = {
+    {   0, 156,   0},
+    { 181, 163, 344},
+    { 164, 183, 348},
+    { 159, 167, 327},
+    { 175, 165, 341},
+    { 172, 163, 335},
+    { 186, 161, 346},
+    { 169,   0,   0}
   };
+  int SupportedEg[FILE_NB][3] = {
+    {   0, 156,   0},
+    { 181, 163, 344},
+    { 164, 183, 348},
+    { 159, 167, 327},
+    { 175, 165, 341},
+    { 172, 163, 335},
+    { 186, 161, 346},
+    { 169,   0,   0}
+  };
+
+   int SupportedRankMg[RANK_NB] = { 0,  0, 128, 128, 128, 128, 128 };
+   int SupportedRankEg[RANK_NB] = { 0,  0,  32,  64,  96, 128, 160 };
 
   // Strength of pawn shelter for our king by [distance from edge][rank].
   // RANK_1 = 0 is used for files where we have no pawn, or pawn is behind our king.
@@ -149,37 +161,30 @@ namespace {
         if (passed)
             e->passedPawns[Us] |= s;
 
+        if (!support)
+            score -=   Doubled * doubled
+                     + WeakLever * more_than_one(lever);
+
         // Score this pawn
         if (support | phalanx)
         {
-            if (!support)
-                score -=   Doubled * doubled
-                         + WeakLever * more_than_one(lever);
+            int v = Connected[r] * (2 + bool(phalanx) - bool(opposed));
+            score += make_score(v, v * (r - 2) / 4);
 
-            int v =  0;
-
-            while(support)
+            if(support)
             {
                 Square ss = pop_lsb(&support);
 
-                int t = (file_of(ss) > file_of(s)) ? 1 : 0;
+                int t = 0;
+                if (support) // the pawn is supported twice
+                    t = 2;
+                else if (file_of(ss) > file_of(s))
+                    t = 1;
 
-                // Is the supporter pawn also supported ?
-                if (ourPawns & PawnAttacks[Them][ss])
-                    t += 2;
-
-                // Is the supporter pawn a lever ?
-                if (theirPawns & PawnAttacks[Us][ss])
-                    t += 4;
-
-                v += Supported[file_of(s)][t];
+                int mg = SupportedMg[file_of(s)][t] * SupportedRankMg[r] / 1024;
+                int eg = SupportedEg[file_of(s)][t] * SupportedRankEg[r] / 1024;
+                score += make_score(mg, eg);
             }
-
-            v = v/8;
-
-            v += Connected[r] * (2 + bool(phalanx) - bool(opposed));
-
-            score += make_score(v, v * (r - 2) / 4);
         }
 
         else if (!neighbours)
