@@ -44,28 +44,28 @@ namespace {
 
   // Supported pawn bonus [File of supported][0-left/1-right/2-both)]
   int SupportedMg[FILE_NB][3] = {
-    {   0, 156,   0},
-    { 181, 163, 344},
-    { 164, 183, 348},
-    { 159, 167, 327},
-    { 175, 165, 341},
-    { 172, 163, 335},
-    { 186, 161, 346},
-    { 169,   0,   0}
+    {   0, 128,   0},
+    { 188, 158, 340},
+    { 153, 187, 367},
+    { 171, 159, 348},
+    { 166, 171, 348},
+    { 168, 173, 346},
+    { 192, 155, 343},
+    { 151,   0,   0}
   };
   int SupportedEg[FILE_NB][3] = {
-    {   0, 156,   0},
-    { 181, 163, 344},
-    { 164, 183, 348},
-    { 159, 167, 327},
-    { 175, 165, 341},
-    { 172, 163, 335},
-    { 186, 161, 346},
-    { 169,   0,   0}
+    {   0, 173,   0},
+    { 205, 141, 320},
+    { 146, 171, 316},
+    { 152, 170, 329},
+    { 174, 178, 353},
+    { 174, 178, 326},
+    { 193, 160, 351},
+    { 164,   0,   0}
   };
 
-   int SupportedRankMg[RANK_NB] = { 0,  0, 128, 128, 128, 128, 128 };
-   int SupportedRankEg[RANK_NB] = { 0,  0,  32,  64,  96, 128, 160 };
+   int SupportedRankMg[RANK_NB] = { 0,  0, 134, 119, 124, 123, 131 };
+   int SupportedRankEg[RANK_NB] = { 0,  0,  31,  63,  92, 137, 163 };
 
   // Strength of pawn shelter for our king by [distance from edge][rank].
   // RANK_1 = 0 is used for files where we have no pawn, or pawn is behind our king.
