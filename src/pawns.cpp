@@ -216,14 +216,17 @@ Score Entry::evaluate_shelter(const Position& pos, Square ksq) {
   {
       FilesToBlock |= file_bb(f);
       b = theirPawns & file_bb(f);
-      Square s = frontmost_sq(Us, b);
-      while(true)
+      if (b)
       {
-          TargetSquares |= pawn_attacks_bb<Them>(square_bb(s));
-          s = s + Down;
-          if (   relative_rank(Us, s) == 1
-              || (pos.pieces(Us, PAWN) & s))
-            break;
+          Square s = frontmost_sq(Us, b);
+          while(true)
+          {
+              TargetSquares |= pawn_attacks_bb<Them>(square_bb(s));
+              s = s + Down;
+              if (   relative_rank(Us, s) == 1
+                  || (pos.pieces(Us, PAWN) & s))
+                break;
+          }
       }
   }
 
