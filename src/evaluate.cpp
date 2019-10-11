@@ -716,7 +716,7 @@ namespace {
                            &&  outflanking < 0
                            && !pawnsOnBothFlanks;
 
-    // Compute the initiative bonus for the attacking side
+    // Compute the initiative bonus/penalty for the attacking side
     int complexity =   9 * pe->passed_count()
                     + 11 * pos.count<PAWN>()
                     +  9 * outflanking
@@ -725,10 +725,25 @@ namespace {
                     - 36 * almostUnwinnable
                     -103 ;
 
-    // Now apply the bonus: note that we find the attacking side by extracting the
+    // Imbalances in the position make it more likely to be winning at equal static eval,
+    // even if the specific imbalance on the board is usually bad the stronger side.
+
+    bool knightImbalance     = (pos.count<KNIGHT>(WHITE) != pos.count<KNIGHT>(BLACK));
+    bool bishopImbalance     = (pos.count<BISHOP>(WHITE) != pos.count<BISHOP>(BLACK));
+    bool bishopPairImbalance = (pos.count<BISHOP>() <= 3 && (pos.count<BISHOP>(WHITE) == 2 || pos.count<BISHOP>(BLACK) ==2));
+    int  rookImbalance       = std::abs(pos.count<ROOK>(WHITE) - pos.count<ROOK>(BLACK));
+
+    int imbalance =  2 + (knightImbalance || bishopImbalance) + bishopPairImbalance + rookImbalance
+                   + 2 * (rookImbalance && (knightImbalance || bishopImbalance)) // this covers the exchange and queen for R+M sacs
+                   + 2 * (std::abs(pos.count<KNIGHT>(WHITE) + pos.count<BISHOP>(WHITE) - pos.count<KNIGHT>(BLACK) - pos.count<BISHOP>(BLACK)) >= 3) // Qv3M
+                   + (std::abs(pos.count<PAWN>(WHITE) - pos.count<PAWN>(BLACK)) >= 3);
+
+    imbalance = (imbalance * imbalance) - 12;
+
+    // Now apply the bonus/penalty: note that we find the attacking side by extracting the
     // sign of the midgame or endgame values, and that we carefully cap the bonus
     // so that the midgame and endgame scores do not change sign after the bonus.
-    int u = ((mg > 0) - (mg < 0)) * std::max(std::min(complexity + 50, 0), -abs(mg));
+    int u = ((mg > 0) - (mg < 0)) * std::max(imbalance + std::min(complexity + 50, 0), -abs(mg));
     int v = ((eg > 0) - (eg < 0)) * std::max(complexity, -abs(eg));
 
     if (T)
