@@ -128,6 +128,7 @@ namespace {
 
   // Assorted bonuses and penalties
   constexpr Score BishopPawns        = S(  3,  7);
+  constexpr Score BishopFlanks       = S(  0, 16);
   constexpr Score CorneredBishop     = S( 50, 50);
   constexpr Score FlankAttacks       = S(  8,  0);
   constexpr Score Hanging            = S( 69, 36);
@@ -261,6 +262,9 @@ namespace {
     constexpr Direction Down = (Us == WHITE ? SOUTH : NORTH);
     constexpr Bitboard OutpostRanks = (Us == WHITE ? Rank4BB | Rank5BB | Rank6BB
                                                    : Rank5BB | Rank4BB | Rank3BB);
+    constexpr Bitboard WestFlank = FileABB | FileBBB | FileCBB;
+    constexpr Bitboard EastFlank = FileFBB | FileGBB | FileHBB;
+
     const Square* pl = pos.squares<Pt>(Us);
 
     Bitboard b, bb;
@@ -322,6 +326,12 @@ namespace {
                 // Bonus for bishop on a long diagonal which can "see" both center squares
                 if (more_than_one(attacks_bb<BISHOP>(s, pos.pieces(PAWN)) & Center))
                     score += LongDiagonalBishop;
+
+                // Endgame bonus if there are pawns on both sides of the board
+                if(   mob >= 3
+                   && more_than_one(pos.pieces(PAWN) & WestFlank)
+                   && more_than_one(pos.pieces(PAWN) & EastFlank))
+                    score += BishopFlanks;
             }
 
             // An important Chess960 pattern: A cornered bishop blocked by a friendly
