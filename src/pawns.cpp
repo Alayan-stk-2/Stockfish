@@ -61,7 +61,7 @@ namespace {
     { V(-39), V(-13), V(-29), V(-52), V(-48), V(-67), V(-166) }
   };
 
-TUNE(SetRange(-250,150), ShelterStrength, ShelterStrenghBlocked);
+TUNE(SetRange(-250,150), ShelterStrength, ShelterStrengthBlocked);
 
   // Danger of enemy pawns moving toward our king by [distance from edge][rank].
   // RANK_1 = 0 is used for files where the enemy has no pawn, or their pawn
