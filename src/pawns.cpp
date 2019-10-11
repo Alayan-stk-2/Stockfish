@@ -232,8 +232,6 @@ Score Entry::evaluate_shelter(const Position& pos, Square ksq) {
   if (TargetSquares & pos.pieces(Us, PAWN))
       unstormable = false;
 
-dbg_mean_of(unstormable);
-
   for (File f = File(center - 1); f <= File(center + 1); ++f)
   {
       b = ourPawns & file_bb(f);
