@@ -88,6 +88,14 @@ namespace {
 
 #define S(mg, eg) make_score(mg, eg)
 
+  // Penalize the king if it is too far away from a file with pawns.
+  // If there is no pawns left on the board, both kings get the
+  // same penalty and this evaluation term is neutral.
+  constexpr Score KingPawnFileProximity[FILE_NB] = {
+    S(   0,   0), S( -18,  -6), S( -29,  -13), S( -50, -46),
+    S( -52, -88), S( -51,-112), S( -51, -126), S( -48,-134),
+  };
+
   // MobilityBonus[PieceType-2][attacked] contains bonuses for middle and end game,
   // indexed by piece type and number of attacked squares in the mobility area.
   constexpr Score MobilityBonus[][32] = {
@@ -137,7 +145,6 @@ namespace {
   constexpr Score MinorBehindPawn    = S( 18,  3);
   constexpr Score Outpost            = S( 32, 10);
   constexpr Score PassedFile         = S( 11,  8);
-  constexpr Score PawnlessFlank      = S( 17, 95);
   constexpr Score RestrictedPiece    = S(  7,  7);
   constexpr Score RookOnQueenFile    = S(  7,  6);
   constexpr Score SliderOnQueen      = S( 59, 18);
@@ -464,9 +471,36 @@ namespace {
     if (kingDanger > 100)
         score -= make_score(kingDanger * kingDanger / 4096, kingDanger / 16);
 
-    // Penalty when our king is on a pawnless flank
-    if (!(pos.pieces(PAWN) & KingFlank[file_of(ksq)]))
-        score -= PawnlessFlank;
+    // Penalty when our king is too far from pawns. The distance is measured
+    // over files, as this is the most relevant metric for passers.
+    File kingFile = file_of(pos.square<KING>(Us));
+    File f1 = kingFile;
+    File f2 = kingFile;
+    int dist = 0;
+
+    if(   pos.pieces(PAWN)
+       && !(file_bb(kingFile) & pos.pieces(PAWN)))
+    {
+        for (int i=1; i<=7; i++)
+        {
+            ++f1;
+            --f2;
+            if(   (f1) < 8
+               && file_bb(f1) & pos.pieces(PAWN))
+            {
+                dist = i;
+                break;
+            }
+            if(   (f2) >= 0
+               && file_bb(f2) & pos.pieces(PAWN))
+            {
+                dist = i;
+                break;
+            }
+        }
+    }
+
+    score -= KingPawnFileProximity[dist];
 
     // Penalty if king flank is under attack, potentially moving toward the king
     score -= FlankAttacks * kingFlankAttacks;
