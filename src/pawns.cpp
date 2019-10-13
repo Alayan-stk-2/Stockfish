@@ -32,31 +32,33 @@ namespace {
   #define S(mg, eg) make_score(mg, eg)
 
   // Pawn penalties
-  constexpr Score Backward           = S( 9, 24);
+  Score Backward           = S( 9, 24);
   constexpr Score BlockedStorm       = S(82, 82);
-  constexpr Score Isolated           = S( 5, 15);
-  constexpr Score WeakLever          = S( 0, 56);
-  constexpr Score WeakUnopposed      = S(13, 27);
+  Score Isolated           = S( 5, 15);
+  Score WeakLever          = S( 0, 56);
+  Score WeakUnopposed      = S(13, 27);
 
   // Doubled pawn related penalties
   // Tripled, etc. pawn automatically get penalized there
 
-  constexpr Score DoubledEdge        = S( 0,  0);
+  Score DoubledEdge        = S( 0,  0);
 
   // Two cases : 0 if the pawn blocks an enemy pawn from pushing
   // with the threat of de-doubling on capture, 1 if not
-  constexpr Score Doubled[2]         = { S( 0,  0), S( 0, 0) };
-  constexpr Score DoubledIsolated[2] = { S( 0,  0), S( 0, 0) };
+  Score Doubled[2]         = { S( 0,  0), S( 0, 0) };
+  Score DoubledIsolated[2] = { S( 0,  0), S( 0, 0) };
 
   // The bottom pawn can't be pushed.
   // Two dimensions : phalanx and lever
-  constexpr Score DoubledContact[2][2] = {
+  Score DoubledContact[2][2] = {
     { S(11, 56), S(11, 56) }, // not lever
     { S(11, 56), S(11, 56) }  // lever
   };
 
   // Connected pawn bonus
-  constexpr int Connected[RANK_NB] = { 0, 7, 8, 12, 29, 48, 86 };
+  int Connected[RANK_NB] = { 0, 7, 8, 12, 29, 48, 86 };
+
+TUNE(SetRange(-20,120), Backward, Isolated, WeakLever, WeakUnopposed, DoubledEdge, Doubled, DoubledIsolated, DoubledContact, Connected);
 
   // Strength of pawn shelter for our king by [distance from edge][rank].
   // RANK_1 = 0 is used for files where we have no pawn, or pawn is behind our king.
