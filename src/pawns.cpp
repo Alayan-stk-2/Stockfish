@@ -32,13 +32,28 @@ namespace {
   #define S(mg, eg) make_score(mg, eg)
 
   // Pawn penalties
-  constexpr Score Backward        = S( 9, 24);
-  constexpr Score BlockedStorm    = S(82, 82);
-  constexpr Score Doubled         = S( 9, 38);
-  constexpr Score DoubledIsolated = S(20, 40);
-  constexpr Score Isolated        = S( 5, 15);
-  constexpr Score WeakLever       = S( 0, 56);
-  constexpr Score WeakUnopposed   = S(13, 27);
+  constexpr Score Backward           = S( 9, 24);
+  constexpr Score BlockedStorm       = S(82, 82);
+  constexpr Score Isolated           = S( 5, 15);
+  constexpr Score WeakLever          = S( 0, 56);
+  constexpr Score WeakUnopposed      = S(13, 27);
+
+  // Doubled pawn related penalties
+  // Tripled, etc. pawn automatically get penalized there
+
+  constexpr Score DoubledEdge        = S( 0,  0);
+
+  // Two cases : 0 if the pawn blocks an enemy pawn from pushing
+  // with the threat of de-doubling on capture, 1 if not
+  constexpr Score Doubled[2]         = { S( 0,  0), S( 0, 0) };
+  constexpr Score DoubledIsolated[2] = { S( 0,  0), S( 0, 0) };
+
+  // The bottom pawn can't be pushed.
+  // Two dimensions : phalanx and lever
+  constexpr Score DoubledContact[2][2] = {
+    { S(11, 56), S(11, 56) }, // not lever
+    { S(11, 56), S(11, 56) }  // lever
+  };
 
   // Connected pawn bonus
   constexpr int Connected[RANK_NB] = { 0, 7, 8, 12, 29, 48, 86 };
@@ -71,11 +86,12 @@ namespace {
 
     constexpr Color     Them = (Us == WHITE ? BLACK : WHITE);
     constexpr Direction Up   = (Us == WHITE ? NORTH : SOUTH);
+    constexpr Bitboard  Edge = FileABB | FileHBB;
 
-    Bitboard neighbours, stoppers, support, phalanx, opposed;
+    Bitboard neighbours, stoppers, supported, phalanx, opposed;
     Bitboard lever, leverPush, blocked;
     Square s;
-    bool backward, passed, doubled;
+    bool backward, passed, doubled, doubledContact, sidestopper;
     Score score = SCORE_ZERO;
     const Square* pl = pos.squares<PAWN>(Us);
 
@@ -94,17 +110,20 @@ namespace {
         assert(pos.piece_on(s) == make_piece(Us, PAWN));
 
         Rank r = relative_rank(Us, s);
+        Bitboard forwardFile = forward_file_bb(Us, s);
 
         // Flag the pawn
-        opposed    = theirPawns & forward_file_bb(Us, s);
-        blocked    = theirPawns & (s + Up);
-        stoppers   = theirPawns & passed_pawn_span(Us, s);
-        lever      = theirPawns & PawnAttacks[Us][s];
-        leverPush  = theirPawns & PawnAttacks[Us][s + Up];
-        doubled    = ourPawns   & forward_file_bb(Us, s);
-        neighbours = ourPawns   & adjacent_files_bb(s);
-        phalanx    = neighbours & rank_bb(s);
-        support    = neighbours & rank_bb(s - Up);
+        opposed        = theirPawns & forwardFile;
+        blocked        = theirPawns & (s + Up);
+        stoppers       = theirPawns & passed_pawn_span(Us, s);
+        sidestopper    = stoppers   & !forwardFile;
+        lever          = theirPawns & PawnAttacks[Us][s];
+        leverPush      = theirPawns & PawnAttacks[Us][s + Up];
+        doubled        = ourPawns   & forwardFile;
+        doubledContact = ourPawns   & (s + Up);
+        neighbours     = ourPawns   & adjacent_files_bb(s);
+        phalanx        = neighbours & rank_bb(s);
+        supported      = neighbours & rank_bb(s - Up);
 
         // A pawn is backward when it is behind all pawns of the same color on
         // the adjacent files and cannot safely advance.
@@ -123,7 +142,7 @@ namespace {
                 || (   !(stoppers ^ leverPush)
                     && popcount(phalanx) >= popcount(leverPush))
                 || (   stoppers == blocked && r >= RANK_5
-                    && (shift<Up>(support) & ~(theirPawns | doubleAttackThem)));
+                    && (shift<Up>(supported) & ~(theirPawns | doubleAttackThem)));
 
         // Passed pawns will be properly scored later in evaluation when we have
         // full attack info.
@@ -131,26 +150,38 @@ namespace {
             e->passedPawns[Us] |= s;
 
         // Score this pawn
-        if (support | phalanx)
+        if (supported | phalanx)
         {
             int v =  Connected[r] * (2 + bool(phalanx) - bool(opposed))
-                   + 21 * popcount(support);
+                   + 21 * popcount(supported);
 
             score += make_score(v, v * (r - 2) / 4);
         }
 
         else if (!neighbours)
             score -=   Isolated
-                     + DoubledIsolated * doubled
                      + WeakUnopposed * !opposed;
 
         else if (backward)
             score -=   Backward
                      + WeakUnopposed * !opposed;
 
-        if (!support)
-            score -=   Doubled * doubled
-                     + WeakLever * more_than_one(lever);       
+        if (!supported)
+            score -= WeakLever * more_than_one(lever);  
+
+        if (doubled)
+        {
+            score -= Doubled[sidestopper];
+
+            if (!neighbours)
+                score -= DoubledIsolated[sidestopper];
+
+            if (Edge & s)
+                score -= DoubledEdge;
+
+            if (doubledContact)
+                score -= DoubledContact[bool(phalanx)][bool(lever)];
+        }
     }
 
     return score;
