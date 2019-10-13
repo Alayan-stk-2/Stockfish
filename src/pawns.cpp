@@ -44,11 +44,21 @@ namespace {
 
   // Strength of pawn shelter for our king by [distance from edge][rank].
   // RANK_1 = 0 is used for files where we have no pawn, or pawn is behind our king.
-  constexpr Value ShelterStrength[int(FILE_NB) / 2][RANK_NB] = {
-    { V( -6), V( 81), V( 93), V( 58), V( 39), V( 18), V(  25) },
-    { V(-43), V( 61), V( 35), V(-49), V(-29), V(-11), V( -63) },
-    { V(-10), V( 75), V( 23), V( -2), V( 32), V(  3), V( -45) },
-    { V(-39), V(-13), V(-29), V(-52), V(-48), V(-67), V(-166) }
+ constexpr Value ShelterStrength[int(FILE_NB) / 2][RANK_NB] = {
+    { V(  6), V( 89), V( 98), V( 56), V( 37), V( 25), V(  36) },
+    { V(-45), V( 65), V( 24), V(-44), V(-53), V(-28), V( -73) },
+    { V(  0), V( 81), V( 37), V(  8), V( 32), V( 25), V( -29) },
+    { V(-24), V(  3), V(-35), V(-56), V(-40), V(-71), V(-162) }
+  };
+
+  // Strength of pawn shelter for our king by [distance from edge][rank].
+  // Table used when enemy pawns can't break the shelter
+  // RANK_1 = 0 is used for files where we have no pawn, or pawn is behind our king.
+  constexpr Value ShelterStrengthBlocked[int(FILE_NB) / 2][RANK_NB] = {
+    { V(  4), V( 76), V( 94), V( 53), V( 20), V( 19), V(  38) },
+    { V(-25), V( 73), V( 40), V(-52), V(-22), V(  2), V( -66) },
+    { V( -7), V( 76), V( 27), V(-12), V( 16), V( -6), V( -38) },
+    { V(-46), V(-19), V(-26), V(-76), V(-54), V(-44), V(-158) }
   };
 
   // Danger of enemy pawns moving toward our king by [distance from edge][rank].
@@ -186,6 +196,7 @@ template<Color Us>
 Score Entry::evaluate_shelter(const Position& pos, Square ksq) {
 
   constexpr Color Them = (Us == WHITE ? BLACK : WHITE);
+  constexpr Direction Down = (Us == WHITE ? NORTH : SOUTH);
 
   Bitboard b = pos.pieces(PAWN) & ~forward_ranks_bb(Them, ksq);
   Bitboard ourPawns = b & pos.pieces(Us);
@@ -194,6 +205,34 @@ Score Entry::evaluate_shelter(const Position& pos, Square ksq) {
   Score bonus = make_score(5, 5);
 
   File center = clamp(file_of(ksq), FILE_B, FILE_G);
+
+  bool unstormable = true;
+  Bitboard TargetSquares = 0;
+  Bitboard FilesToBlock  = 0;
+
+  for (File f = File(center - (center == FILE_B ? 1 : 2)); f <= File(center + (center == FILE_G ? 1 : 2)); ++f)
+  {
+      FilesToBlock |= file_bb(f);
+      b = theirPawns & file_bb(f);
+      if (b)
+      {
+          Square s = frontmost_sq(Us, b);
+          while(true)
+          {
+              TargetSquares |= pawn_attacks_bb<Them>(square_bb(s));
+              s = s + Down;
+              if (   relative_rank(Us, s) == 1
+                  || (pos.pieces(Us, PAWN) & s))
+                break;
+          }
+      }
+  }
+
+  TargetSquares &= FilesToBlock;
+
+  if (TargetSquares & pos.pieces(Us, PAWN))
+      unstormable = false;
+
   for (File f = File(center - 1); f <= File(center + 1); ++f)
   {
       b = ourPawns & file_bb(f);
@@ -203,7 +242,8 @@ Score Entry::evaluate_shelter(const Position& pos, Square ksq) {
       int theirRank = b ? relative_rank(Us, frontmost_sq(Them, b)) : 0;
 
       File d = map_to_queenside(f);
-      bonus += make_score(ShelterStrength[d][ourRank], 0);
+      bonus += unstormable ? make_score(ShelterStrengthBlocked[d][ourRank], 0)
+                           : make_score(ShelterStrength[d][ourRank], 0);
 
       if (ourRank && (ourRank == theirRank - 1))
           bonus -= BlockedStorm * int(theirRank == RANK_3);
