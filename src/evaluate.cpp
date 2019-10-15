@@ -104,7 +104,7 @@ TUNE(SetRange(-100,100), KD1);
 
 TUNE(SetRange(   0,240), KDA, KDB, KDC, KDD, KDE, KDF, KDH, KDI);
 TUNE(SetRange(-100,300), KDK);
-TUNE(SetRange(-200,200), KD1);
+TUNE(SetRange(-200,200), KDJ);
 TUNE(SetRange(-100,900), KDL);
 
 
