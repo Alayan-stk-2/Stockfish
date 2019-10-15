@@ -81,10 +81,10 @@ namespace {
   constexpr int KingAttackWeights[PIECE_TYPE_NB] = { 0, 0, 81, 52, 44, 10 };
 
   // Penalties for enemy's safe checks
-  constexpr int QueenSafeCheck  = 780;
-  constexpr int RookSafeCheck   = 1080;
-  constexpr int BishopSafeCheck = 635;
-  constexpr int KnightSafeCheck = 790;
+  constexpr int QueenSafeCheck  = 763;
+  constexpr int RookSafeCheck   = 1058;
+  constexpr int BishopSafeCheck = 638;
+  constexpr int KnightSafeCheck = 770;
 
 #define S(mg, eg) make_score(mg, eg)
 
@@ -389,6 +389,10 @@ namespace {
     // Init the score with king shelter and enemy pawns storm
     Score score = pe->king_safety<Us>(pos);
 
+    int shelter = mg_value(score);
+
+    score -= make_score(10*shelter/128, 0);
+
     // Attacked squares defended at most once by our queen or king
     weak =  attackedBy[Them][ALL_PIECES]
           & ~attackedBy2[Us]
@@ -448,21 +452,21 @@ namespace {
     int kingFlankAttacks = popcount(b1) + popcount(b2);
 
     kingDanger +=        kingAttackersCount[Them] * kingAttackersWeight[Them]
-                 +  69 * kingAttacksCount[Them]
-                 + 185 * popcount(kingRing[Us] & weak)
+                 +  67 * kingAttacksCount[Them]
+                 + 184 * popcount(kingRing[Us] & weak)
                  - 100 * bool(attackedBy[Us][KNIGHT] & attackedBy[Us][KING])
-                 -  35 * bool(attackedBy[Us][BISHOP] & attackedBy[Us][KING])
-                 + 148 * popcount(unsafeChecks)
+                 -  45 * bool(attackedBy[Us][BISHOP] & attackedBy[Us][KING])
+                 + 142 * popcount(unsafeChecks)
                  +  98 * popcount(pos.blockers_for_king(Us))
-                 - 873 * !pos.count<QUEEN>(Them)
-                 -   6 * mg_value(score) / 8
-                 +       mg_value(mobility[Them] - mobility[Us])
+                 - 861 * !pos.count<QUEEN>(Them)
+                 - 115 * mg_value(score) / 128
+                 + 131 * mg_value(mobility[Them] - mobility[Us]) / 128
                  +   3 * kingFlankAttacks * kingFlankAttacks / 8
-                 -   7;
+                 -  27;
 
     // Transform the kingDanger units into a Score, and subtract it from the evaluation
-    if (kingDanger > 100)
-        score -= make_score(kingDanger * kingDanger / 4096, kingDanger / 16);
+    if (kingDanger > 109)
+        score -= make_score(kingDanger * (kingDanger + 180) / 4096, kingDanger / 16);
 
     // Penalty when our king is on a pawnless flank
     if (!(pos.pieces(PAWN) & KingFlank[file_of(ksq)]))
