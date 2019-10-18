@@ -108,7 +108,7 @@ namespace {
 
   // RookOnFile[semiopen/open] contains bonuses for each rook when there is
   // no (friendly) pawn on the rook file.
-  constexpr Score RookOnFile[] = { S(21, 4), S(47, 25) };
+  constexpr Score RookOnFile[] = { S(14, 2), S(22, 12), S(47, 25) };
 
   // ThreatByMinor/ByRook[attacked PieceType] contains bonuses according to
   // which piece type attacks which one. Attacks on lesser pieces which are
@@ -346,8 +346,18 @@ namespace {
                 score += RookOnQueenFile;
 
             // Bonus for rook on an open or semi-open file
+            // The semi-open file is better if the enemy pawn
+            // is undefended.
             if (pos.is_on_semiopen_file(Us, s))
-                score += RookOnFile[pos.is_on_semiopen_file(Them, s)];
+            {
+                int openness = 1;
+                if (pos.is_on_semiopen_file(Them, s))
+                    openness = 2;
+                else if (   pos.pieces(Them, PAWN)
+                         & attackedBy[Them][PAWN]
+                         & forward_file_bb(Us, s))
+                    openness = 0;
+                score += RookOnFile[openness];
 
             // Penalty when trapped by the king, even more if the king cannot castle
             else if (mob <= 3)
