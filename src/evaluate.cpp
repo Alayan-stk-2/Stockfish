@@ -358,6 +358,7 @@ namespace {
                          & forward_file_bb(Us, s))
                     openness = 0;
                 score += RookOnFile[openness];
+            }
 
             // Penalty when trapped by the king, even more if the king cannot castle
             else if (mob <= 3)
