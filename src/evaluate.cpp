@@ -389,6 +389,10 @@ namespace {
     // Init the score with king shelter and enemy pawns storm
     Score score = pe->king_safety<Us>(pos);
 
+    int shelter = mg_value(score);
+
+    score -= make_score(14*shelter/128, 0);
+
     // Attacked squares defended at most once by our queen or king
     weak =  attackedBy[Them][ALL_PIECES]
           & ~attackedBy2[Us]
@@ -455,7 +459,7 @@ namespace {
                  + 148 * popcount(unsafeChecks)
                  +  98 * popcount(pos.blockers_for_king(Us))
                  - 873 * !pos.count<QUEEN>(Them)
-                 -   6 * mg_value(score) / 8
+                 - 125 * mg_value(score) / 128
                  +       mg_value(mobility[Them] - mobility[Us])
                  +   3 * kingFlankAttacks * kingFlankAttacks / 8
                  -   7;
