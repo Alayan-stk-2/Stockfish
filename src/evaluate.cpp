@@ -81,10 +81,10 @@ namespace {
   constexpr int KingAttackWeights[PIECE_TYPE_NB] = { 0, 0, 81, 52, 44, 10 };
 
   // Penalties for enemy's safe checks
-  constexpr int QueenSafeCheck  = 780;
-  constexpr int RookSafeCheck   = 1080;
+  constexpr int QueenSafeCheck  = 752;
+  constexpr int RookSafeCheck   = 1049;
   constexpr int BishopSafeCheck = 635;
-  constexpr int KnightSafeCheck = 790;
+  constexpr int KnightSafeCheck = 791;
 
 #define S(mg, eg) make_score(mg, eg)
 
@@ -452,21 +452,21 @@ namespace {
     int kingFlankAttacks = popcount(b1) + popcount(b2);
 
     kingDanger +=        kingAttackersCount[Them] * kingAttackersWeight[Them]
-                 +  69 * kingAttacksCount[Them]
-                 + 185 * popcount(kingRing[Us] & weak)
-                 - 100 * bool(attackedBy[Us][KNIGHT] & attackedBy[Us][KING])
-                 -  35 * bool(attackedBy[Us][BISHOP] & attackedBy[Us][KING])
-                 + 148 * popcount(unsafeChecks)
-                 +  98 * popcount(pos.blockers_for_king(Us))
-                 - 873 * !pos.count<QUEEN>(Them)
+                 +  67 * kingAttacksCount[Them]
+                 + 184 * popcount(kingRing[Us] & weak)
+                 - 102 * bool(attackedBy[Us][KNIGHT] & attackedBy[Us][KING])
+                 -  42 * bool(attackedBy[Us][BISHOP] & attackedBy[Us][KING])
+                 + 136 * popcount(unsafeChecks)
+                 +  99 * popcount(pos.blockers_for_king(Us))
+                 - 866 * !pos.count<QUEEN>(Them)
                  - 125 * mg_value(score) / 128
-                 +       mg_value(mobility[Them] - mobility[Us])
+                 + 135 * mg_value(mobility[Them] - mobility[Us]) / 128
                  +   3 * kingFlankAttacks * kingFlankAttacks / 8
-                 -   7;
+                 -  23;
 
     // Transform the kingDanger units into a Score, and subtract it from the evaluation
-    if (kingDanger > 100)
-        score -= make_score(kingDanger * kingDanger / 4096, kingDanger / 16);
+    if (kingDanger > 112)
+        score -= make_score(kingDanger * (kingDanger + 155) / 4096, kingDanger / 16);
 
     // Penalty when our king is on a pawnless flank
     if (!(pos.pieces(PAWN) & KingFlank[file_of(ksq)]))
