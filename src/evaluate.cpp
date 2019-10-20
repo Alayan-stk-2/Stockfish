@@ -81,10 +81,18 @@ namespace {
   constexpr int KingAttackWeights[PIECE_TYPE_NB] = { 0, 0, 81, 52, 44, 10 };
 
   // Penalties for enemy's safe checks
-  constexpr int QueenSafeCheck  = 780;
-  constexpr int RookSafeCheck   = 1080;
-  constexpr int BishopSafeCheck = 635;
-  constexpr int KnightSafeCheck = 790;
+  constexpr int RookSafeCheck[5]   = { 1080, 1080, 1080, 1080, 1080 };
+  constexpr int QueenSafeCheck[5]  = {  780,  780,  780,  780,  780 };
+  constexpr int BishopSafeCheck[5] = {  635,  635,  635,  635,  635 };
+  constexpr int KnightSafeCheck[5] = {  790,  790,  790,  790,  790 };
+
+  int unsafeCheckFactor[5] = { 148, 148, 148, 148, 148 };
+  int safeEscape[9] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+
+  int KDW = 0;
+  int KDX = 0;
+  int KDY = 0;
+  int KDZ = 7;
 
 #define S(mg, eg) make_score(mg, eg)
 
@@ -381,9 +389,10 @@ namespace {
     constexpr Bitboard Camp = (Us == WHITE ? AllSquares ^ Rank6BB ^ Rank7BB ^ Rank8BB
                                            : AllSquares ^ Rank1BB ^ Rank2BB ^ Rank3BB);
 
-    Bitboard weak, b1, b2, safe, unsafeChecks = 0;
+    Bitboard weak, b1, b2, b3, b4, safe, unsafeChecks = 0;
+    Bitboard escapeSquares, safeEscapeSquares = 0;//, verySafeEscapeSquares = 0;
     Bitboard rookChecks, queenChecks, bishopChecks, knightChecks;
-    int kingDanger = 0;
+    int kingDanger = 0, escapeChoice, safeCheckCount;
     const Square ksq = pos.square<KING>(Us);
 
     // Init the score with king shelter and enemy pawns storm
@@ -394,18 +403,53 @@ namespace {
           & ~attackedBy2[Us]
           & (~attackedBy[Us][ALL_PIECES] | attackedBy[Us][KING] | attackedBy[Us][QUEEN]);
 
+    // Squares that aren't currently attacked by the enemy
+    // or occupied by our pieces
+    escapeSquares = attackedBy[Us][KING] & ~pos.pieces(Us) & attackedBy[Them][ALL_PIECES];
+
     // Analyse the safe enemy's checks which are possible on next move
     safe  = ~pos.pieces(Them);
     safe &= ~attackedBy[Us][ALL_PIECES] | (weak & attackedBy2[Them]);
+
+    // See what escape squares aren't threatened by a (safe) check
+    // This DO NOT account for checks that become available
+    // after a 1st checking move
+    b1 = escapeSquares;
+    while(b1)
+    {
+        Square s = pop_lsb(&b1);
+        b2 = attacks_bb<ROOK  >(ksq, pos.pieces() ^ pos.pieces(Us, QUEEN));
+        b3 = attacks_bb<BISHOP>(ksq, pos.pieces() ^ pos.pieces(Us, QUEEN));
+        b4 = pos.attacks_from<KNIGHT>(s) & attackedBy[Them][KNIGHT];
+
+        // Mark the square as safe if available checks are unsafe
+        if (   !(attackedBy[Them][ROOK]   & b2 & safe)
+            && !(attackedBy[Them][BISHOP] & b3 & safe)
+            && !(attackedBy[Them][QUEEN]  & (b2 | b3) & safe)
+            && !(attackedBy[Them][KNIGHT] & b4 & safe))
+        {
+            safeEscapeSquares |= square_bb(s);
+/*
+            // Mark the square as very safe if no unsafe check exists
+            if (   !(attackedBy[Them][ROOK]   & b2)
+                && !(attackedBy[Them][BISHOP] & b3)
+                && !(attackedBy[Them][QUEEN]  & (b2 | b3))
+                && !(attackedBy[Them][KNIGHT] & b4))
+                verySafeEscapeSquares |= square_bb(s);
+*/
+        }
+    }
+
+    escapeChoice = std::min(popcount(safeEscapeSquares), 4);
 
     b1 = attacks_bb<ROOK  >(ksq, pos.pieces() ^ pos.pieces(Us, QUEEN));
     b2 = attacks_bb<BISHOP>(ksq, pos.pieces() ^ pos.pieces(Us, QUEEN));
 
     // Enemy rooks checks
-    rookChecks = b1 & safe & attackedBy[Them][ROOK];
+    rookChecks = attackedBy[Them][ROOK] & b1 & safe;
 
     if (rookChecks)
-        kingDanger += RookSafeCheck;
+        kingDanger += RookSafeCheck[escapeChoice];
     else
         unsafeChecks |= b1 & attackedBy[Them][ROOK];
 
@@ -418,17 +462,17 @@ namespace {
                  & ~rookChecks;
 
     if (queenChecks)
-        kingDanger += QueenSafeCheck;
+        kingDanger += QueenSafeCheck[escapeChoice];
 
     // Enemy bishops checks: we count them only if they are from squares from
     // which we can't give a queen check, because queen checks are more valuable.
-    bishopChecks =  b2
-                  & attackedBy[Them][BISHOP]
+    bishopChecks =  attackedBy[Them][BISHOP]
+                  & b2
                   & safe
                   & ~queenChecks;
 
     if (bishopChecks)
-        kingDanger += BishopSafeCheck;
+        kingDanger += BishopSafeCheck[escapeChoice];
     else
         unsafeChecks |= b2 & attackedBy[Them][BISHOP];
 
@@ -436,9 +480,11 @@ namespace {
     knightChecks = pos.attacks_from<KNIGHT>(ksq) & attackedBy[Them][KNIGHT];
 
     if (knightChecks & safe)
-        kingDanger += KnightSafeCheck;
+        kingDanger += KnightSafeCheck[escapeChoice];
     else
         unsafeChecks |= knightChecks;
+
+    safeCheckCount = popcount(rookChecks & queenChecks & bishopChecks & (knightChecks & safe));
 
     // Find the squares that opponent attacks in our king flank, and the squares
     // which are attacked twice in that flank.
@@ -452,13 +498,17 @@ namespace {
                  + 185 * popcount(kingRing[Us] & weak)
                  - 100 * bool(attackedBy[Us][KNIGHT] & attackedBy[Us][KING])
                  -  35 * bool(attackedBy[Us][BISHOP] & attackedBy[Us][KING])
-                 + 148 * popcount(unsafeChecks)
+                 + unsafeCheckFactor[escapeChoice] * popcount(unsafeChecks)
                  +  98 * popcount(pos.blockers_for_king(Us))
                  - 873 * !pos.count<QUEEN>(Them)
                  -   6 * mg_value(score) / 8
                  +       mg_value(mobility[Them] - mobility[Us])
                  +   3 * kingFlankAttacks * kingFlankAttacks / 8
-                 -   7;
+                 - safeEscape[popcount(safeEscapeSquares)]
+                 + KDW * safeCheckCount * safeCheckCount
+                 + KDX * !escapeSquares
+                 + KDY * !safeEscapeSquares
+                 - KDZ;
 
     // Transform the kingDanger units into a Score, and subtract it from the evaluation
     if (kingDanger > 100)
