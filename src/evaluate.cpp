@@ -81,18 +81,25 @@ namespace {
   constexpr int KingAttackWeights[PIECE_TYPE_NB] = { 0, 0, 81, 52, 44, 10 };
 
   // Penalties for enemy's safe checks
-  constexpr int RookSafeCheck[5]   = { 1080, 1080, 1080, 1080, 1080 };
-  constexpr int QueenSafeCheck[5]  = {  780,  780,  780,  780,  780 };
-  constexpr int BishopSafeCheck[5] = {  635,  635,  635,  635,  635 };
-  constexpr int KnightSafeCheck[5] = {  790,  790,  790,  790,  790 };
+  int RookSafeCheck[5]   = { 1080, 1080, 1080, 1080, 1080 };
+  int QueenSafeCheck[5]  = {  780,  780,  780,  780,  780 };
+  int BishopSafeCheck[5] = {  635,  635,  635,  635,  635 };
+  int KnightSafeCheck[5] = {  790,  790,  790,  790,  790 };
+
+TUNE(SetRange(200, 1600), RookSafeCheck, QueenSafeCheck, BishopSafeCheck, KnightSafeCheck);
 
   int unsafeCheckFactor[5] = { 148, 148, 148, 148, 148 };
   int safeEscape[9] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+
+TUNE(SetRange(0, 300), unsafeCheckFactor);
 
   int KDW = 0;
   int KDX = 0;
   int KDY = 0;
   int KDZ = 7;
+TUNE(SetRange(-200, 200), safeEscape, KDX, KDY, KDZ);
+
+TUNE(SetRange(-20, 100), KDW);
 
 #define S(mg, eg) make_score(mg, eg)
 
