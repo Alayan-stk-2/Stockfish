@@ -279,7 +279,7 @@ TUNE(SetRange(-100, 100), ClosednessKnightAdjustment, ClosednessRookAdjustment);
     {
         closedness = 3
                    + 1 * popcount(pos.pieces(PAWN))
-                   + 3 * popcount((pos.pieces(Us, PAWN) + Up) & pos.pieces(Them, PAWN))
+                   + 3 * popcount(shift<Up>(pos.pieces(Us, PAWN)) & pos.pieces(Them, PAWN))
                    - 4 * openFileCount(pos.pieces(PAWN));
         closedness = std::max(0, std::min(9, closedness / 3));
     }
