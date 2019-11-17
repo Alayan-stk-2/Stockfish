@@ -133,16 +133,16 @@ namespace {
 
   // ClosednessKnightAdjustment contains a bonus/penalty according to how closed the position is
   Score ClosednessKnightAdjustment[10] = {
-    S(   0,   0), S(   0,   0), S(   0,   0), S(   0,   0),
-    S(   0,   0), S(   0,   0), S(   0,   0), S(   0,   0),
-    S(   0,   0), S(   0,   0)
+    S( -10,  -7), S(  -8,  -2), S(   1,  -4), S(  -3,  10),
+    S(   4,  -9), S(  -6,  -5), S(  -3,   2), S(   6,  -1),
+    S(   5,  -2), S( -10,   3)
   };
 
   // ClosednessRookAdjustment contains a bonus/penalty according to how closed the position is
   Score ClosednessRookAdjustment[10] = {
-    S(   0,   0), S(   0,   0), S(   0,   0), S(   0,   0),
-    S(   0,   0), S(   0,   0), S(   0,   0), S(   0,   0),
-    S(   0,   0), S(   0,   0)
+    S(  11,   4), S(   8,  16), S(   7,  12), S(  13,   4),
+    S(  -3,  -3), S(   7,   0), S(   1,  -3), S(  -4,  -3),
+    S(   0,  -4), S( -14, -13)
   };
 
 TUNE(SetRange(-100, 100), ClosednessKnightAdjustment, ClosednessRookAdjustment);
