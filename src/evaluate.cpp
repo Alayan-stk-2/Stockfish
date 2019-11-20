@@ -134,7 +134,7 @@ namespace {
   // ClosednessKnightAdjustment contains a bonus/penalty according to how closed the position is
   Score ClosednessKnightAdjustment[10] = {
     S(  -5,  -9), S(  -9,  -5), S(   9,  -5), S(  -4,   4),
-    S(   3,  -6), S(  -7,   0), S(  -3,   6), S(   3,   3,
+    S(   3,  -6), S(  -7,   0), S(  -3,   6), S(   3,   3),
     S(   6,   6), S( -12,   7)
   };
 
