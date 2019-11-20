@@ -133,16 +133,16 @@ namespace {
 
   // ClosednessKnightAdjustment contains a bonus/penalty according to how closed the position is
   Score ClosednessKnightAdjustment[10] = {
-    S(  -5,  -9), S(  -9,  -5), S(  14,  -7), S( -11,  11),
-    S(   7, -14), S(  -3,  -8), S(  -7,   6), S(  -3,  -2),
-    S(   6,  -6), S( -19,   7)
+    S(  -5,  -9), S(  -9,  -5), S(   9,  -5), S(  -4,   4),
+    S(   3,  -6), S(  -7,   0), S(  -3,   6), S(   3,   3,
+    S(   6,   6), S( -12,   7)
   };
 
   // ClosednessRookAdjustment contains a bonus/penalty according to how closed the position is
   Score ClosednessRookAdjustment[10] = {
-    S(  11,  13), S(   3,  15), S(   9,  24), S(  15,  10),
-    S(   6,  -6), S(   6, -10), S(  -2,  -5), S(   1,  -8),
-    S(  -4,  -7), S( -13,  -8)
+    S(  11,  13), S(   6,  12), S(   9,  24), S(  15,  10),
+    S(   6,  -6), S(   6, -10), S(   0,  -7), S(  -1,  -8),
+    S(  -4,  -8), S( -13,  -8)
   };
 
   // Assorted bonuses and penalties
