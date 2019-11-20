@@ -131,13 +131,6 @@ namespace {
     S(0, 0), S(0, 0), S(0, 0), S(28, 18), S(30, 24), S(32, 19)
   };
 
-  // ClosednessKnightAdjustment contains a bonus/penalty according to how closed the position is
-  Score ClosednessKnightAdjustment[10] = {
-    S(  -5,  -9), S(  -9,  -5), S(   9,  -5), S(  -4,   4),
-    S(   3,  -6), S(  -7,   0), S(  -3,   6), S(   3,   3),
-    S(   6,   6), S( -12,   7)
-  };
-
   // ClosednessRookAdjustment contains a bonus/penalty according to how closed the position is
   Score ClosednessRookAdjustment[10] = {
     S(  11,  13), S(   6,  12), S(   9,  24), S(  15,  10),
@@ -336,9 +329,6 @@ namespace {
             // Knight and Bishop bonus for being right behind a pawn
             if (shift<Down>(pos.pieces(PAWN)) & s)
                 score += MinorBehindPawn;
-
-            if (Pt == KNIGHT)
-                score += ClosednessKnightAdjustment[closedness];
 
             // Penalty if the piece is far from the king
             score -= KingProtector * distance(s, pos.square<KING>(Us));
