@@ -131,6 +131,20 @@ namespace {
     S(0, 0), S(0, 0), S(0, 0), S(28, 18), S(30, 24), S(32, 19)
   };
 
+  // ClosednessKnightAdjustment contains a bonus/penalty according to how closed the position is
+  Score ClosednessKnightAdjustment[10] = {
+    S(  -5,  -9), S(  -9,  -5), S(  14,  -7), S( -11,  11),
+    S(   7, -14), S(  -3,  -8), S(  -7,   6), S(  -3,  -2),
+    S(   6,  -6), S( -19,   7)
+  };
+
+  // ClosednessRookAdjustment contains a bonus/penalty according to how closed the position is
+  Score ClosednessRookAdjustment[10] = {
+    S(  11,  13), S(   3,  15), S(   9,  24), S(  15,  10),
+    S(   6,  -6), S(   6, -10), S(  -2,  -5), S(   1,  -8),
+    S(  -4,  -7), S( -13,  -8)
+  };
+
   // Assorted bonuses and penalties
   constexpr Score BishopPawns        = S(  3,  7);
   constexpr Score CorneredBishop     = S( 50, 50);
@@ -209,8 +223,15 @@ namespace {
     // a white knight on g5 and black's king is on g8, this white knight adds 2
     // to kingAttacksCount[WHITE].
     int kingAttacksCount[COLOR_NB];
+
+    // Closedness is an estimator of how closed the position is
+    int closedness;
   };
 
+  int openFileCount(Bitboard pawns) {
+    pawns |= pawns >> 8; pawns |= pawns >> 16; pawns |= pawns >> 32;
+    return popcount(~pawns & 0xFF);
+  }
 
   // Evaluation::initialize() computes king and pawn attacks, and the king ring
   // bitboard for a given color. This is done at the beginning of the evaluation.
@@ -249,6 +270,16 @@ namespace {
 
     // Remove from kingRing[] the squares defended by two pawns
     kingRing[Us] &= ~dblAttackByPawn;
+
+    // Compute Closedness factor for this position
+    if(Us == WHITE)
+    {
+        closedness = 3
+                   + 1 * popcount(pos.pieces(PAWN))
+                   + 3 * popcount(shift<Up>(pos.pieces(Us, PAWN)) & pos.pieces(Them, PAWN))
+                   - 4 * openFileCount(pos.pieces(PAWN));
+        closedness = std::max(0, std::min(9, closedness / 3));
+    }
   }
 
 
@@ -306,6 +337,9 @@ namespace {
             if (shift<Down>(pos.pieces(PAWN)) & s)
                 score += MinorBehindPawn;
 
+            if (Pt == KNIGHT)
+                score += ClosednessKnightAdjustment[closedness];
+
             // Penalty if the piece is far from the king
             score -= KingProtector * distance(s, pos.square<KING>(Us));
 
@@ -355,6 +389,9 @@ namespace {
                 if ((kf < FILE_E) == (file_of(s) < kf))
                     score -= TrappedRook * (1 + !pos.castling_rights(Us));
             }
+
+            // Bonus/penalty for a rook based on how closed the position is
+            score += ClosednessRookAdjustment[closedness];
         }
 
         if (Pt == QUEEN)
