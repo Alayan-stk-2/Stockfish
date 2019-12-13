@@ -485,6 +485,8 @@ void Thread::search() {
               {
                   beta = std::min(bestValue + delta, VALUE_INFINITE);
                   ++failedHighCnt;
+                  if (failedHighCnt >= 2)
+                      ttHitAverage = ttHitAverageWindow * ttHitAverageResolution / 2;
               }
               else
               {
