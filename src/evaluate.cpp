@@ -126,6 +126,11 @@ namespace {
     S(0, 0), S(10, 28), S(17, 33), S(15, 41), S(62, 72), S(168, 177), S(276, 260)
   };
 
+  // PassedStacked[Rank] contains a penalty according to the rank of a passed pawn
+  constexpr Score PassedStacked[RANK_NB] = {
+    S(0, 0), S( 0,  8), S( 0, 12), S( 4, 16), S(10, 24), S( 30,  45), S(  0,   0)
+  };
+
   // Assorted bonuses and penalties
   constexpr Score BishopPawns        = S(  3,  7);
   constexpr Score CorneredBishop     = S( 50, 50);
@@ -594,6 +599,9 @@ namespace {
         int r = relative_rank(Us, s);
 
         Score bonus = PassedRank[r];
+
+        if(pos.pieces(Us, PAWN) & forward_file_bb(Us, s))
+            bonus -= PassedStacked[r];
 
         if (r > RANK_3)
         {
