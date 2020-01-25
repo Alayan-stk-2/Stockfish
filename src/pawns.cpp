@@ -223,18 +223,58 @@ Score Entry::do_king_safety(const Position& pos) {
 
   Square ksq = pos.square<KING>(Us);
   kingSquares[Us] = ksq;
-  castlingRights[Us] = pos.castling_rights(Us);
-  auto compare = [](Score a, Score b) { return mg_value(a) < mg_value(b); };
 
   Score shelter = evaluate_shelter<Us>(pos, ksq);
 
-  // If we can castle use the bonus after castling if it is bigger
+  // In endgame we like to bring our king near our closest pawn
+  Bitboard pawns = pos.pieces(Us, PAWN);
+  int minPawnDist = pawns ? 8 : 0;
 
-  if (pos.can_castle(Us & KING_SIDE))
-      shelter = std::max(shelter, evaluate_shelter<Us>(pos, relative_square(Us, SQ_G1)), compare);
+  if (pawns & PseudoAttacks[KING][ksq])
+      minPawnDist = 1;
+  else while (pawns)
+      minPawnDist = std::min(minPawnDist, distance(ksq, pop_lsb(&pawns)));
 
-  if (pos.can_castle(Us & QUEEN_SIDE))
-      shelter = std::max(shelter, evaluate_shelter<Us>(pos, relative_square(Us, SQ_C1)), compare);
+  return shelter - make_score(0, 16 * minPawnDist);
+}
+
+/// Entry::do_king_safety() calculates a bonus for king safety. It is called only
+/// when king square changes, which is about 20% of total king_safety() calls.
+
+template<Color Us>
+Score Entry::do_king_safety_short(const Position& pos) {
+
+  assert(pos.can_castle(Us & KING_SIDE));
+
+  Square ksq = pos.square<KING>(Us);
+  kingSquares[Us] = ksq;
+
+  Score shelter = evaluate_shelter<Us>(pos, relative_square(Us, SQ_G1));
+
+  // In endgame we like to bring our king near our closest pawn
+  Bitboard pawns = pos.pieces(Us, PAWN);
+  int minPawnDist = pawns ? 8 : 0;
+
+  if (pawns & PseudoAttacks[KING][ksq])
+      minPawnDist = 1;
+  else while (pawns)
+      minPawnDist = std::min(minPawnDist, distance(ksq, pop_lsb(&pawns)));
+
+  return shelter - make_score(0, 16 * minPawnDist);
+}
+
+/// Entry::do_king_safety() calculates a bonus for king safety. It is called only
+/// when king square changes, which is about 20% of total king_safety() calls.
+
+template<Color Us>
+Score Entry::do_king_safety_long(const Position& pos) {
+
+  assert(pos.can_castle(Us & QUEEN_SIDE));
+
+  Square ksq = pos.square<KING>(Us);
+  kingSquares[Us] = ksq;
+
+  Score shelter = evaluate_shelter<Us>(pos, relative_square(Us, SQ_C1));
 
   // In endgame we like to bring our king near our closest pawn
   Bitboard pawns = pos.pieces(Us, PAWN);
@@ -251,5 +291,9 @@ Score Entry::do_king_safety(const Position& pos) {
 // Explicit template instantiation
 template Score Entry::do_king_safety<WHITE>(const Position& pos);
 template Score Entry::do_king_safety<BLACK>(const Position& pos);
+template Score Entry::do_king_safety_short<WHITE>(const Position& pos);
+template Score Entry::do_king_safety_short<BLACK>(const Position& pos);
+template Score Entry::do_king_safety_long<WHITE>(const Position& pos);
+template Score Entry::do_king_safety_long<BLACK>(const Position& pos);
 
 } // namespace Pawns

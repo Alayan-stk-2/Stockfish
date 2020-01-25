@@ -383,6 +383,61 @@ namespace {
     // Init the score with king shelter and enemy pawns storm
     Score score = pe->king_safety<Us>(pos);
 
+    // If castling is possible, modulate the shelter/storm score
+    if(pos.can_castle(Us & KING_SIDE))
+    {
+        Score score_short = pe->king_safety_short<Us>(pos);
+        if(mg_value(score_short) > mg_value(score))
+        {
+            const Square rsq = (Us == WHITE) ? SQ_H1 : SQ_H8; // Doesn't work for 960
+
+            // In regular chess positions, the bishop also requires a pawn to be
+            // moved before being able to move. A more accurate measure would
+            // take this into account.
+            int short_blockers = popcount(pos.pieces(Us) & between_bb(ksq, rsq));
+            if(!short_blockers)
+                score = score_short;
+            else
+            {
+                int mg, mgs, eg, egs;
+                mg  = mg_value(score);
+                mgs = mg_value(score_short);
+                eg  = eg_value(score);
+                egs = eg_value(score_short);
+
+                // The factors should be clamped to [0, 10]
+                mg = (mgs*(10 - 3*short_blockers) + mg*(3*short_blockers))/10;
+                eg = (egs*(10 - 3*short_blockers) + eg*(3*short_blockers))/10;
+                score = make_score(mg, eg);
+            }
+        }
+    }
+    if(pos.can_castle(Us & QUEEN_SIDE))
+    {
+        Score score_long = pe->king_safety_long<Us>(pos);
+        if(mg_value(score_long) > mg_value(score)) // If score has been changed by short castling, the order matters...
+        {
+            const Square rsq = (Us == WHITE) ? SQ_A1 : SQ_A8; // Doesn't work for 960
+            int long_blockers = popcount(pos.pieces(Us) & between_bb(ksq, rsq));
+            if(!long_blockers)
+                score = score_long;
+            else
+            {
+                int mg, mgl, eg, egl;
+                mg  = mg_value(score);
+                mgl = mg_value(score_long);
+                eg  = eg_value(score);
+                egl = eg_value(score_long);
+
+                // The factors should be clamped to [0, 10]
+                mg = (mgl*(10 - 3*long_blockers) + mg*(3*long_blockers))/10;
+                eg = (egl*(10 - 3*long_blockers) + eg*(3*long_blockers))/10;
+                score = make_score(mg, eg);
+            }
+        }
+    }
+
+
     // Attacked squares defended at most once by our queen or king
     weak =  attackedBy[Them][ALL_PIECES]
           & ~attackedBy2[Us]

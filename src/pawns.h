@@ -41,12 +41,30 @@ struct Entry {
 
   template<Color Us>
   Score king_safety(const Position& pos) {
-    return  kingSquares[Us] == pos.square<KING>(Us) && castlingRights[Us] == pos.castling_rights(Us)
+    return  kingSquares[Us] == pos.square<KING>(Us)
           ? kingSafety[Us] : (kingSafety[Us] = do_king_safety<Us>(pos));
   }
 
   template<Color Us>
+  Score king_safety_short(const Position& pos) {
+    return  kingSquares[Us] == pos.square<KING>(Us) && castlingRights[Us] == pos.castling_rights(Us)
+          ? kingSafetyShort[Us] : (kingSafetyShort[Us] = do_king_safety_short<Us>(pos));
+  }
+
+  template<Color Us>
+  Score king_safety_long(const Position& pos) {
+    return  kingSquares[Us] == pos.square<KING>(Us) && castlingRights[Us] == pos.castling_rights(Us)
+          ? kingSafetyLong[Us] : (kingSafetyLong[Us] = do_king_safety_long<Us>(pos));
+  }
+
+  template<Color Us>
   Score do_king_safety(const Position& pos);
+
+  template<Color Us>
+  Score do_king_safety_short(const Position& pos);
+
+  template<Color Us>
+  Score do_king_safety_long(const Position& pos);
 
   template<Color Us>
   Score evaluate_shelter(const Position& pos, Square ksq);
@@ -58,6 +76,8 @@ struct Entry {
   Bitboard pawnAttacksSpan[COLOR_NB];
   Square kingSquares[COLOR_NB];
   Score kingSafety[COLOR_NB];
+  Score kingSafetyShort[COLOR_NB];
+  Score kingSafetyLong[COLOR_NB];
   int castlingRights[COLOR_NB];
 };
 
