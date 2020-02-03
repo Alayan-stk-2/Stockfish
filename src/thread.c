@@ -20,11 +20,15 @@
 #include <string.h>
 
 #include "board.h"
+#include "evaluate.h"
 #include "history.h"
 #include "search.h"
 #include "thread.h"
 #include "transposition.h"
 #include "types.h"
+
+int ContemptDrawPenalty = 12; // Set by UCI Options
+int ContemptComplexity  = 4;  // Set by UCI Options
 
 Thread* createThreadPool(int nthreads) {
 
@@ -80,6 +84,11 @@ void newSearchThreadPool(Thread *threads, Board *board, Limits *limits, SearchIn
         threads[i].info = info;
         threads[i].nodes = threads[i].tbhits = 0ull;
         memcpy(&threads[i].board, board, sizeof(Board));
+
+        // Build contempt score for the side to move using UCI settings
+        threads[i].contempt = board->turn == WHITE
+                            ? MakeScore( ContemptDrawPenalty + ContemptComplexity,  ContemptDrawPenalty)
+                            : MakeScore(-ContemptDrawPenalty - ContemptComplexity, -ContemptDrawPenalty);
     }
 }
 
