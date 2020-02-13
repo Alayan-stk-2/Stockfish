@@ -748,8 +748,8 @@ namespace {
     if (sf == SCALE_FACTOR_NORMAL)
     {
         int loneQueen =    pos.non_pawn_material(strongSide) == QueenValueMg
-                        && pos.non_pawn_material(!strongSide) >= 2 * KnightValueMg
-                        && !pos.count<QUEEN>(!strongSide);
+                        && pos.non_pawn_material(~strongSide) >= 2 * KnightValueMg
+                        && !pos.count<QUEEN>(~strongSide);
 
         if (   pos.opposite_bishops()
             && pos.non_pawn_material() == 2 * BishopValueMg)
