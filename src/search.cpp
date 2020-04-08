@@ -390,9 +390,11 @@ void Thread::search() {
           : Options["Analysis Contempt"] == "Black" && us == WHITE ? -ct
           : ct;
 
+  ct = (us == WHITE) ? ct : 0;
+
   // Evaluation score is from the white point of view
   contempt = (us == WHITE ?  make_score(ct, ct / 2)
-                          : -make_score( 0, 0));
+                          : -make_score(ct, ct / 2));
 
   int searchAgainCounter = 0;
 
