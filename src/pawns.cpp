@@ -33,9 +33,9 @@ namespace {
 
   // Pawn penalties
 
-  Score Backward[RANK_NB]   = { S(0, 0), S( 13, 30), S( 11, 25), S( 8, 24), S( 6, 23), S(0, 0), S(0, 0), S(0, 0), } ;
+  constexpr Score Backward[RANK_NB]   = { S(0, 0), S( 15, 28), S( 13, 25), S( 10, 24), S( 5, 21), S(0, 0), S(0, 0), S(0, 0), } ;
 
-  TUNE(SetRange(0, 40), Backward);
+//  TUNE(SetRange(0, 40), Backward);
 
   constexpr Score BlockedStorm  = S(82, 82);
   constexpr Score Doubled       = S(11, 56);
