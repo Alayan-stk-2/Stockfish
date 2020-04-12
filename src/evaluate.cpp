@@ -745,10 +745,41 @@ namespace {
     if (sf == SCALE_FACTOR_NORMAL)
     {
         if (   pos.opposite_bishops()
-            && pos.non_pawn_material() == 2 * BishopValueMg)
+            && pos.non_pawn_material() == 2 * BishopValueMg) {
             sf = 22 ;
-        else
+        }
+        else if (   pos.non_pawn_material() <= 2 * BishopValueMg
+                 && pos.non_pawn_material() >= 2 * KnightValueEg
+                 && pos.non_pawn_material(~strongSide) >= KnightValueEg
+                 && pe->passed_count() == 0) {
+
+            if (pos.count<PAWN>(strongSide) - pos.count<PAWN>(~strongSide) >= 2)
+                goto normalScale;
+
+            int prev = 0;
+            int islands = 0;
+            Bitboard pawns = pos.pieces(strongSide, PAWN);
+            for (int i = 0; i<8; i++) {
+                if (pawns & file_bb((File) i)) {
+                    if (prev == 0) {
+                        prev = 1;
+                        islands++;
+                    }
+                }
+                else {
+                    prev = 0;
+                }
+            }
+
+            if (islands >= 2)
+                goto normalScale;
+
+            sf = std::min(sf, 22 + 4 * pos.count<PAWN>(strongSide));
+        }
+        else {
+        normalScale:
             sf = std::min(sf, 36 + (pos.opposite_bishops() ? 2 : 7) * pos.count<PAWN>(strongSide));
+        }
 
         sf = std::max(0, sf - (pos.rule50_count() - 12) / 4);
     }
