@@ -739,6 +739,9 @@ namespace {
   ScaleFactor Evaluation<T>::scale_factor(Value eg) const {
 
     Color strongSide = eg > VALUE_DRAW ? WHITE : BLACK;
+
+    Direction Up   = pawn_push(strongSide);
+
     int sf = me->scale_factor(pos, strongSide);
 
     // If scale is not already specific, scale down the endgame via general heuristics
@@ -749,13 +752,23 @@ namespace {
             sf = 22 ;
         }
         else if (   pos.non_pawn_material() <= 2 * BishopValueMg
-                 && pos.non_pawn_material() >= 2 * KnightValueEg
-                 && pos.non_pawn_material(~strongSide) >= KnightValueEg
-                 && pe->passed_count() == 0) {
+                 && pos.non_pawn_material() >= 2 * KnightValueMg
+                 && pos.non_pawn_material(~strongSide) >= KnightValueMg
+                 && ~pe->passed_pawns(~strongSide)) {
 
+            // 1 pawn advantage maximum
             if (pos.count<PAWN>(strongSide) - pos.count<PAWN>(~strongSide) >= 2)
                 goto normalScale;
 
+            // No real passed pawns (candidates are ok)
+            Bitboard tempPawns = pe->passed_pawns(strongSide);
+            while (tempPawns) {
+                Square s = pop_lsb(&tempPawns);
+                if (pos.pawn_passed(strongSide, s + Up))
+                    goto normalScale;
+            }
+
+            // Only one pawn island for the strongSide
             int prev = 0;
             int islands = 0;
             Bitboard pawns = pos.pieces(strongSide, PAWN);
@@ -770,7 +783,6 @@ namespace {
                     prev = 0;
                 }
             }
-
             if (islands >= 2)
                 goto normalScale;
 
