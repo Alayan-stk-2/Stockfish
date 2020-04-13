@@ -135,6 +135,9 @@ namespace {
         if (passed)
             e->passedPawns[Us] |= s;
 
+        if (blocked)
+            e->blockedPawns[Us] |= s;
+
         // Score this pawn
         if (support | phalanx)
         {

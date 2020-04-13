@@ -145,6 +145,7 @@ namespace {
   constexpr Score ThreatByPawnPush    = S( 48, 39);
   constexpr Score ThreatBySafePawn    = S(173, 94);
   constexpr Score TrappedRook         = S( 52, 10);
+  constexpr Score TwoWeaknessesSCB    = S(  0, 90);
   constexpr Score WeakQueen           = S( 49, 15);
   constexpr Score WeakQueenProtection = S( 14,  0);
 
@@ -547,6 +548,15 @@ namespace {
     // Bonus for safe pawn threats on the next move
     b = pawn_attacks_bb<Us>(b) & nonPawnEnemies;
     score += ThreatByPawnPush * popcount(b);
+
+    // Bonus 
+    if (   (pos.non_pawn_material() == 2 * BishopValueMg)
+        && !pos.opposite_bishops()
+        && (pos.count<BISHOP>(WHITE) == 1)
+        && more_than_one(pe->blocked_pawns(Them) & (pos.pieces(BISHOP) & DarkSquares ? DarkSquares : ~DarkSquares)))
+    {
+        score += TwoWeaknessesSCB;
+    }
 
     // Bonus for threats on the next moves against enemy queen
     if (pos.count<QUEEN>(Them) == 1)
