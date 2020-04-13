@@ -553,6 +553,7 @@ namespace {
     if (   (pos.non_pawn_material() == 2 * BishopValueMg)
         && !pos.opposite_bishops()
         && (pos.count<BISHOP>(WHITE) == 1)
+        && !pe->passed_pawns(Them)
         && more_than_one(pe->blocked_pawns(Them) & (pos.pieces(BISHOP) & DarkSquares ? DarkSquares : ~DarkSquares)))
     {
         score += TwoWeaknessesSCB;
