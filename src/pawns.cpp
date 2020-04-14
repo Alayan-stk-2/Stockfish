@@ -33,7 +33,7 @@ namespace {
 
   // Pawn penalties
   constexpr Score Backward      = S( 8, 21);
-  constexpr score DoubleBackward = S( 3, 20);
+  constexpr Score DoubleBackward = S( 3, 20);
   constexpr Score BlockedStorm  = S(82, 82);
   constexpr Score Doubled       = S(11, 56);
   constexpr Score Isolated      = S( 5, 15);
@@ -152,7 +152,7 @@ namespace {
         else if (backward)
             score -=   Backward
                      + WeakUnopposed * !opposed
-                     + doubleBackward * more_than_one(leverPush);
+                     + DoubleBackward * more_than_one(leverPush);
 
         if (!support)
             score -=   Doubled * doubled
