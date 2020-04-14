@@ -138,8 +138,8 @@ namespace {
         // Score this pawn
         if (support | phalanx)
         {
-            bool outside = (file_of(s) == FILE_A) || (file_of(s) == FILE_H) ;
-            int v =  Connected[r] * (4 + 2 * bool(phalanx) - 2 * bool(opposed) - bool(blocked) - outside) / 2
+            bool center = (file_of(s) == FILE_D) || (file_of(s) == FILE_E) ;
+            int v =  Connected[r] * (4 + 2 * bool(phalanx) - 2 * bool(opposed) - bool(blocked) + center) / 2
                    + 21 * popcount(support);
 
             score += make_score(v, v * (r - 2) / 4);
