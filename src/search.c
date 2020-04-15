@@ -206,6 +206,7 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth, int h
     int R, newDepth, rAlpha, rBeta, oldAlpha = alpha;
     int inCheck, isQuiet, improving, extension, singular, multiCut, skipQuiets = 0;
     int eval, value = -MATE, best = -MATE, futilityMargin, seeMargin[2];
+    int rootDepth = depth + height;
     uint16_t move, ttMove = NONE_MOVE, bestMove = NONE_MOVE, quietsTried[MAX_MOVES];
     MovePicker movePicker;
     PVariation lpv;
@@ -426,13 +427,15 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth, int h
 
             // Step 11D (~8 elo). Counter Move Pruning. Moves with poor counter
             // move history are pruned at near leaf nodes of the search.
-            if (   depth <= CounterMovePruningDepth[improving]
+            if (   rootDepth >= RootExplorationDepth
+                && depth <= CounterMovePruningDepth[improving]
                 && cmhist < CounterMoveHistoryLimit[improving])
                 continue;
 
             // Step 11E (~1.5 elo). Follow Up Move Pruning. Moves with poor
             // follow up move history are pruned at near leaf nodes of the search.
-            if (   depth <= FollowUpMovePruningDepth[improving]
+            if (   rootDepth >= RootExplorationDepth
+                && depth <= FollowUpMovePruningDepth[improving]
                 && fmhist < FollowUpMoveHistoryLimit[improving])
                 continue;
         }
