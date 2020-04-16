@@ -36,6 +36,7 @@ namespace {
   constexpr Score BlockedStorm  = S(82, 82);
   constexpr Score Doubled       = S(11, 56);
   constexpr Score Isolated      = S( 5, 15);
+  constexpr Score DIP           = S(30,  9);
   constexpr Score WeakLever     = S( 0, 56);
   constexpr Score WeakUnopposed = S(13, 27);
 
@@ -154,7 +155,8 @@ namespace {
 
         if (!support)
             score -=   Doubled * doubled
-                     + WeakLever * more_than_one(lever);
+                     + WeakLever * more_than_one(lever)
+                     + DIP * (!neighbours && opposed);
     }
 
     return score;
