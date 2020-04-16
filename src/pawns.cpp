@@ -34,7 +34,8 @@ namespace {
   // Pawn penalties
   constexpr Score Backward      = S( 9, 24);
   constexpr Score BlockedStorm  = S(82, 82);
-  constexpr Score Doubled       = S(11, 56);
+  constexpr Score DoubledTouch  = S( 8, 35);
+  constexpr Score Doubled       = S( 3, 21);
   constexpr Score Isolated      = S( 5, 15);
   constexpr Score WeakLever     = S( 0, 56);
   constexpr Score WeakUnopposed = S(13, 27);
@@ -74,7 +75,7 @@ namespace {
     Bitboard neighbours, stoppers, support, phalanx, opposed;
     Bitboard lever, leverPush, blocked;
     Square s;
-    bool backward, passed, doubled;
+    bool backward, passed, doubled, doubledTouch;
     Score score = SCORE_ZERO;
     const Square* pl = pos.squares<PAWN>(Us);
 
@@ -96,15 +97,16 @@ namespace {
         Rank r = relative_rank(Us, s);
 
         // Flag the pawn
-        opposed    = theirPawns & forward_file_bb(Us, s);
-        blocked    = theirPawns & (s + Up);
-        stoppers   = theirPawns & passed_pawn_span(Us, s);
-        lever      = theirPawns & PawnAttacks[Us][s];
-        leverPush  = theirPawns & PawnAttacks[Us][s + Up];
-        doubled    = ourPawns   & (s - Up);
-        neighbours = ourPawns   & adjacent_files_bb(s);
-        phalanx    = neighbours & rank_bb(s);
-        support    = neighbours & rank_bb(s - Up);
+        opposed      = theirPawns & forward_file_bb(Us, s);
+        blocked      = theirPawns & (s + Up);
+        stoppers     = theirPawns & passed_pawn_span(Us, s);
+        lever        = theirPawns & PawnAttacks[Us][s];
+        leverPush    = theirPawns & PawnAttacks[Us][s + Up];
+        doubledTouch = ourPawns   & (s - Up);
+        doubled      = ourPawns   & forward_file_bb(Them, s);
+        neighbours   = ourPawns   & adjacent_files_bb(s);
+        phalanx      = neighbours & rank_bb(s);
+        support      = neighbours & rank_bb(s - Up);
 
         e->blockedCount[Us] += blocked || more_than_one(leverPush);
 
@@ -153,8 +155,11 @@ namespace {
                      + WeakUnopposed * !opposed;
 
         if (!support)
-            score -=   Doubled * doubled
+            score -=   DoubledTouch * doubledTouch
                      + WeakLever * more_than_one(lever);
+
+        if (doubled)
+            score -=   Doubled;
     }
 
     return score;
