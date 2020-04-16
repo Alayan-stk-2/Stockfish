@@ -726,8 +726,6 @@ namespace {
     bool strongPawnsOnBothFlanks =    (pos.pieces(strongSide, PAWN) & QueenSide)
                                    && (pos.pieces(strongSide, PAWN) & KingSide);
 
-     dbg_mean_of(strongPawnsOnBothFlanks);
-
     bool almostUnwinnable =   outflanking < 0
                            && !pawnsOnBothFlanks;
 
