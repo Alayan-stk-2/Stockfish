@@ -927,7 +927,13 @@ namespace {
             // based on the number of passed pawns of the strong side.
             if (   pos.non_pawn_material(WHITE) == BishopValueMg
                 && pos.non_pawn_material(BLACK) == BishopValueMg)
-                sf = 18 + 4 * popcount(pe->passed_pawns(strongSide));
+            {
+                Bitboard b = pe->passed_pawns(strongSide);
+                b |= b >> 8; b |= b >> 16; b |= b >> 32;
+                b = b & 0xFF;
+                int separate_passers = (distance(lsb(b), msb(b)) >= 2);
+                sf = 18 + 12 * separate_passers;
+            }
             // For every other opposite colored bishops endgames use scale factor
             // based on the number of all pieces of the strong side.
             else
