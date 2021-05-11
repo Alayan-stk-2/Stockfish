@@ -924,15 +924,34 @@ namespace {
         if (pos.opposite_bishops())
         {
             // For pure opposite colored bishops endgames use scale factor
-            // based on the number of passed pawns of the strong side.
+            // based on the strong side: having passed pawns, having at least 3 pawns,
+            // having separated passed pawns, not having a wrong rook pawn
             if (   pos.non_pawn_material(WHITE) == BishopValueMg
                 && pos.non_pawn_material(BLACK) == BishopValueMg)
             {
                 Bitboard b = pe->passed_pawns(strongSide);
+                // Remove blocked passers because P+B blocks the lever push too easily
+                if (strongSide == WHITE)
+                    b = b & ~shift<SOUTH>(pos.pieces(~strongSide, PAWN));
+                else
+                    b = b & ~shift<NORTH>(pos.pieces(~strongSide, PAWN));
                 b |= b >> 8; b |= b >> 16; b |= b >> 32;
                 b = b & 0xFF;
-                int separate_passers = (distance(lsb(b), msb(b)) >= 2);
-                sf = 18 + 12 * separate_passers;
+                int passer_span = distance(lsb(b), msb(b));
+
+                int wrong_rook_pawn = 0;
+                if (!opposite_colors(make_square(FILE_A, RANK_8), pos.square<BISHOP>(strongSide)) != !(strongSide == WHITE))
+                {
+                    if (pos.pieces(strongSide, PAWN) & FileHBB)
+                        wrong_rook_pawn = 1;
+                }
+                else if (pos.pieces(strongSide, PAWN) & FileABB)
+                {
+                        wrong_rook_pawn = 1;
+                }
+
+                sf = 14 + 4 * (pos.count<PAWN>(strongSide) >= 3) - 8 * wrong_rook_pawn
+                   + 4 * (b != 0) + 6 * (passer_span >= 2) + 6 * (passer_span >= 4);
             }
             // For every other opposite colored bishops endgames use scale factor
             // based on the number of all pieces of the strong side.
